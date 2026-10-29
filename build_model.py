@@ -187,6 +187,18 @@ apply_all_modifiers(base)
 for p in parts[1:]:
     bpy.data.objects.remove(p)
 cleanup(base)
+if not SMOOTH:
+    # 4.2.2 / 4.3.1 pętle krawędzi na połówce podstawy - każda ściana osobno do zaznaczenia
+    bm = bmesh.new()
+    bm.from_mesh(base.data)
+    planes = [((x, 0, 0), (1, 0, 0)) for x in (5, 20, 25)]
+    planes += [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60)]
+    planes += [((0, 0, z), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60)]
+    for co, no in planes:
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-4)
+    bm.to_mesh(base.data)
+    bm.free()
 
 # usunięcie ścian leżących w płaszczyźnie symetrii X = 0 (otwarta połowa)
 bm = bmesh.new()
@@ -368,6 +380,16 @@ bpy.ops.wm.obj_export(filepath=os.path.join(out_dir, f"wspornik_final_{VARIANT}.
                       export_selected_objects=True, export_materials=False)
 bpy.ops.wm.stl_export(filepath=os.path.join(out_dir, f"wspornik_final_{VARIANT}.stl"),
                       export_selected_objects=True)
+if not SMOOTH:
+    # wersja "z paskami": widoczny proces budowy - obiekt_mods (podstawa z Mirror +
+    # Boolean, cylinder, ukryte wycięcia) włączony, obiekt_final wyłączony okiem
+    col_mods.hide_viewport = False
+    col_mods.hide_render = False
+    bpy.context.view_layer.layer_collection.children["obiekt_final"].hide_viewport = True
+    for o in bpy.context.view_layer.objects:
+        o.select_set(o == base)
+    bpy.context.view_layer.objects.active = base
+
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, f"projekt4_wspornik_{VARIANT}.blend"),
                             compress=True)
 print("[lab4] zapisano", out_dir)
