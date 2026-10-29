@@ -41,8 +41,8 @@ def near(a, b):
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.unit_settings.system = 'METRIC'
-scene.unit_settings.scale_length = 0.001
-scene.unit_settings.length_unit = 'MILLIMETERS'
+scene.unit_settings.scale_length = 1.0
+scene.unit_settings.length_unit = 'METERS'   # jak u prowadzącego: 1 mm = 0.01 m
 img = bpy.data.images.load(os.path.join(HERE, "blueprint.png"))
 img.pack()
 
@@ -94,9 +94,12 @@ bmesh.ops.delete(bm, geom=[f for f in bm.faces
 bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
 
 me = bpy.data.meshes.new("Cube")
+# skala instrukcji: 1 mm = 0.01 m, podstawa wyśrodkowana w Z (Z -0.1..0.1)
+for v in bm.verts:
+    v.co = Vector((v.co.x * 0.01, v.co.y * 0.01, (v.co.z - 10) * 0.01))
 bm.to_mesh(me)
 bm.free()
-base = bpy.data.objects.new("Cube", me)          # nazwa jeszcze nie poprawiona
+base = bpy.data.objects.new("Cube", me)
 col_model.objects.link(base)
 mir = base.modifiers.new("Mirror", 'MIRROR')
 mir.use_axis = (True, False, False)
@@ -105,9 +108,10 @@ mir.use_mirror_merge = True
 mir.merge_threshold = 0.01
 
 # --- 4.3.3 (2) cylinder fi50 x 40 dodany, jeszcze NIE osadzony (wisi nad modelem) ----------------
-bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=25, depth=40,
-                                    location=(0, 55, 140), rotation=(math.radians(90), 0, 0))
+bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=1, depth=2,
+                                    location=(0, 0.55, 1.3), rotation=(math.radians(90), 0, 0))
 cyl = bpy.context.active_object
+cyl.scale = (0.25, 0.25, 0.2)                     # 0.5 x 0.5 x 0.4 m
 for c in cyl.users_collection:
     c.objects.unlink(cyl)
 col_model.objects.link(cyl)
@@ -118,23 +122,22 @@ for ob in (base, cyl):
     ob.data.materials.append(mat)
 
 # 3D kursor w miejscu przyszłego otworu fi15 (przygotowanie do 4.4)
-scene.cursor.location = (0, 10, -60)
+scene.cursor.location = (0, 0.1, -0.7)
 
 # --- notatki postępu (zakładka Scripting) ------------------------------------
 txt = bpy.data.texts.new("POSTEP_PRACY.txt")
 txt.write("""PROJEKT 4 - STAN PRACY
-[x] 4.1   scena, jednostki mm, blueprint w Image Editor (zakładka UV Editing)
+[x] 4.1   scena (metry, 1 mm = 0.01 m), blueprint w Image Editor (zakładka UV Editing)
 [x] 4.2.1 kostka 60x70x20, podział YZ, połowa usunięta, Mirror X + Clipping
 [x] 4.2.2 pętle krawędzi: X=5, 20, 25 / Y=10, 20, 35, 60
 [x] 4.3.1 część dolna wyciągnięta o 80, cięcie Z=-60
 [x] 4.3.2 Bevel R10 i R20, 16 segmentów
-[~] 4.3.3 (2) cylinder fi50x40 dodany - TRZEBA go osadzić w (0, 55, 80)
+[~] 4.3.3 (2) cylinder fi50x40 dodany - TRZEBA go osadzić: Location (0, 0.55, 0.7)
 [ ] 4.3.3 (1) tylna ścianka gr.10 do Z=80, zwężona do stycznej (zaznaczone ściany)
 [ ] 4.3.3 (3)-(5) podpórka - pełna ścianka gr.10 pod skosem do cylindra
-[ ] zmienić nazwę obiektu Cube -> podstawa
-[ ] 4.4   kolekcja "wycięcia": fi20, pogłębienie fi30x6 (Mirror), fi15 (kursor już ustawiony)
-[ ] 4.4   Boolean Difference -> kolekcja "wycięcia"
-[ ] 4.5   obiekt_mods / obiekt_final, apply, Union
+[ ] 4.4   kolekcja "wycinanie": fi20, pogłębienie fi30x6 (Mirror), fi15 (kursor już ustawiony w (0, 0.1, -0.7))
+[ ] 4.4   Boolean Difference -> kolekcja "wycinanie"
+[ ] 4.5   obiekt_mods (model + wycinanie) -> Duplicate Collection -> obiekt_final, apply, Union
 """)
 
 # --- widoki: blueprint obok viewportu ----------------------------------------
@@ -144,12 +147,11 @@ for scr in bpy.data.screens:
             area.spaces.active.image = img
         if area.type == 'VIEW_3D':
             sp = area.spaces.active
-            sp.clip_end = 5000
             sp.overlay.show_wireframes = True
             sp.overlay.show_extra_edge_length = True
             r = sp.region_3d
-            r.view_location = (0, 35, 0)
-            r.view_distance = 320
+            r.view_location = (0, 0.35, 0.2)
+            r.view_distance = 3.4
             r.view_rotation = Vector((0, 0, -1)).rotation_difference(Vector((0, 0, -1)))
             r.view_rotation = (Matrix.Rotation(math.radians(-45), 3, 'Z') @
                                Matrix.Rotation(math.radians(60), 3, 'X')).to_quaternion()

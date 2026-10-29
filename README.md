@@ -6,114 +6,102 @@ Osobny projekt laboratoryjny (nie jest częścią aplikacji *mini-zoom*, leży n
 
 | Plik | Co to jest |
 |---|---|
-| `output/projekt4_wspornik_gladki.blend` | **Wersja końcowa GŁADKA** – bez pasków: 128 segmentów cylindra, 32 segmenty zaokrągleń, *Shade Smooth by Angle* 30° |
-| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa Z PASKAMI – widać proces budowy**: włączona kolekcja `obiekt_mods` → `model` (`podstawa` = połówka z pętlami cięć + **Mirror** + **Boolean Difference**, `cylinder` + Boolean), ukryta `wycięcia` (⌀20, pogłębienie ⌀30×6 z Mirror, ⌀15), Empty `srodek_cylindra`; `obiekt_final` (zatwierdzona bryła `wspornik_final`) wyłączona okiem – włączasz w Outlinerze. Po `Tab` na `podstawa` każdą ścianę można zaznaczyć osobno, widać długości krawędzi. Overlays → Wireframe włączone. Oba pliki końcowe:
-| `output/wspornik_final_gladki.*`, `output/wspornik_final_paski.*` (`.obj`, `.stl`) | Sama bryła końcowa (do importu w starszym Blenderze / druku 3D) |
-| `output/projekt4_polowa.blend` | **Wersja zrobiona do połowy** (stan w trakcie pracy – patrz niżej) |
-| `build_half.py` | Skrypt budujący wersję do połowy |
-| `podglad_polowa.png` | Podgląd wersji do połowy (z siatką) |
-| `build_model.py` | Skrypt, który buduje cały model od zera (te same kroki co niżej) |
-| `blueprint.png` | Rysunek referencyjny |
-| `podglad.png` | Rendery modelu z 4 stron |
+| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa z paskami**: widoczne wszystkie linie siatki (Overlays → Wireframe, Edge Length), po `Tab` każdą ścianę można zaznaczyć osobno |
+| `output/projekt4_wspornik_gladki.blend` | **Wersja końcowa gładka**: 128 segmentów cylindra, Shade Smooth by Angle 30°, bez pasków |
+| `output/projekt4_polowa.blend` | **Wersja zrobiona do połowy** (stan po zadaniu 4.3.2) |
+| `output/wspornik_final_*.obj`, `.stl` | Sama bryła końcowa (import w starszym Blenderze / druk 3D) |
+| `build_model.py`, `build_half.py` | Skrypty, które budują pliki od zera (`LAB4_SMOOTH=1` → wersja gładka) |
+| `blueprint.png`, `instrukcja-Lab-proj-4.pdf` | Rysunek referencyjny i instrukcja |
+| `podglad*.png` | Podglądy |
 
-**Jak pobrać z GitHuba:** wejdź w repozytorium → przełącz gałąź na `blender-lab4` → `output/projekt4_wspornik_gladki.blend` (lub `_paski`) → przycisk *Download raw file*.
-Plik zapisany w Blenderze 5.2 – otworzy się w Blenderze 4.5 LTS i nowszych. W starszej wersji: uruchom `build_model.py` (zakładka *Scripting* → *Open* → *Run Script*, `blueprint.png` musi leżeć obok skryptu) albo zaimportuj `.obj`.
+**Jak pobrać z GitHuba:** wejdź w repozytorium → przełącz gałąź na `blender-lab4` → `output/…blend` → *Download raw file*.
+Pliki są zapisane w Blenderze 5.2 i otwierają się w wersji 4.5 LTS lub nowszej.
 
-Po otwarciu `.blend` kliknij u góry zakładkę **Blueprint** – po lewej Image Editor z rysunkiem, po prawej Viewport 3D (zad. 4.1).
+## Konwencja jak u prowadzącego
 
-![podgląd](podglad.png)
+Jednostki domyślne (metry), **1 mm z rysunku = 0.01 m**:
+* podstawa 60 × 70 × 20 → **0.6 × 0.7 × 0.2 m**; przód na płaszczyźnie XZ (Y = 0), kostka wyśrodkowana w Z (Z −0.1…0.1), origin w World Origin,
+* cylinder ⌀50 × 40 → `Shift+A` *Cylinder*, **Location (0, 0.55, 0.7)**, **Rotation X 90°**, **Scale 0.25 / 0.25 / 0.2** → Dimensions 0.5 × 0.5 × 0.4 m (oś 60 mm nad górą podstawy).
+
+## Scene Collection w pliku końcowym (zad. 4.4–4.5)
+
+```
+obiekt_mods                [oko wył.]  ← stan z modyfikatorami
+  model
+    Cube           Mirror (X, Clipping, Merge 0.01 m) + Boolean (Difference, Collection: wycinanie, Exact)
+    Cylinder       Boolean (Difference, Collection: wycinanie, Exact)
+  wycinanie                [oko wył.]
+    Cylinder.001   otwór ⌀20 przelotowy
+    Cylinder.002   otwór ⌀15 przelotowy
+    Cylinder.003   pogłębienie ⌀30 × 6 + Mirror (Mirror Object: Cylinder) → obie strony
+obiekt_final                            ← Duplicate Collection, modyfikatory zatwierdzone
+  model.001
+    Cube.001       gotowa bryła (Mirror → Boolean → Union z cylindrem, apply)
+    Cylinder.004   [ukryty] cylinder użyty w Union
+  wycinanie.001            [oko wył.]
+    Cylinder.005 / .006 / .007
+```
+Żeby zobaczyć wersję z działającymi modyfikatorami: w Outlinerze włącz oko przy `obiekt_mods`, a wyłącz przy `obiekt_final`.
+
+## Wymiary [mm z rysunku → m w Blenderze]
+
+| Element | Wymiary |
+|---|---|
+| Podstawa | 60 × 70 × 20 → 0.6 × 0.7 × 0.2 |
+| Część dolna | szer. 40 (2×R20), grub. 20 (Y 0…0.2), środek otworu 60 pod spodem podstawy (Z = −0.7), dół R20, przejście R10 |
+| Otwór dolny | ⌀15 przelotowy |
+| Cylinder | ⌀50 × 40, oś 60 nad górą podstawy (Z = 0.7), Y 0.35…0.75 |
+| Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
+| Tylna ścianka | pełna, gr. 10 (Y 0.6…0.7), od podstawy do osi cylindra, u dołu szer. 60, zwęża się do 50 (styczna do cylindra) |
+| Podpórka | pełna ścianka gr. 10 (X −0.05…0.05): skos od przedniej krawędzi podstawy do dołu przodu cylindra, pod skosem wypełniona do podstawy, cylindra i tylnej ścianki |
 
 ## Wersja zrobiona do połowy – `projekt4_polowa.blend`
 
-Zrobione: 4.1, 4.2, 4.3.1 i 4.3.2, czyli podstawa z Mirror, wszystkie pętle cięć, część dolna wyciągnięta o 80 i zaokrąglenia R10/R20. Cylinder ⌀50×40 jest dodany, ale **jeszcze nieosadzony** (wisi nad modelem).
-Niezrobione: tylna ścianka, podpórka, osadzenie cylindra (4.3.3), otwory i Boolean (4.4), oczyszczanie (4.5).
-Po czym widać, że to praca w toku:
-* obiekt nadal nazywa się `Cube`, plik otwiera się w **Edit Mode** z zaznaczonymi ścianami, z których będą wyciągane tylna ścianka i podpórka (następny krok),
-* Mirror jest niezatwierdzony (edytowana tylko połowa), widać wszystkie pętle cięć i bevele 16 segmentów,
-* 3D kursor stoi już w miejscu otworu ⌀15 (0, 10, −60),
-* brak kolekcji `wycięcia`, `obiekt_mods`, `obiekt_final`,
-* lista postępu w tekście `POSTEP_PRACY.txt`.
+Zrobione: 4.1, 4.2, 4.3.1 i 4.3.2, czyli podstawa z Mirror, pętle cięć, część dolna i zaokrąglenia R10/R20. Cylinder jest dodany ze skalą 0.25/0.25/0.2, ale **jeszcze nieosadzony** (Z = 1.3 zamiast 0.7).
+Niezrobione: tylna ścianka, podpórka, osadzenie cylindra, `wycinanie`, Boolean, `obiekt_mods`/`obiekt_final`.
+Plik otwiera się w Edit Mode z zaznaczonymi ścianami do następnego extrude. Kursor 3D stoi w miejscu otworu ⌀15, a lista postępu jest w `POSTEP_PRACY.txt` (zakładka Scripting).
 
-**Jakie zakładki otworzyć (u góry okna Blendera):**
-1. **Layout** – widok startowy: Viewport 3D w Edit Mode, w Outlinerze kolekcja `model` z `Cube` i `Cylinder`; po prawej *Properties* → ikona klucza 🔧 (*Modifiers*) pokazuje niezatwierdzony Mirror.
-2. **UV Editing** – po lewej Image Editor z blueprintem, po prawej Viewport 3D (to jest układ z zad. 4.1).
-3. **Modeling** – wygodna praca na siatce (Edit Mode).
-4. **Scripting** – w edytorze tekstu `POSTEP_PRACY.txt` z odhaczonymi i pozostałymi krokami.
+**Zakładki:** **Layout** (start), **UV Editing** (blueprint obok widoku 3D – zad. 4.1), **Modeling**, **Scripting** (lista postępu).
 
-W Viewport włączone są nakładki *Wireframe* i *Edge Length*. Przy zaznaczonych krawędziach wyświetlają się ich długości.
+## Wykonanie krok po kroku (ręcznie)
 
-## Wymiary odczytane z rysunku [mm]
+### 4.1
+1. *File → New → General*, usuń kostkę, kamerę i światło (`X`).
+2. Zakładka *UV Editing* (albo podziel okno): Viewport 3D obok Image Editor, *Image → Open* → `blueprint.png`.
 
-Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm). Przód podstawy leży na płaszczyźnie XZ (Y = 0), model rośnie w stronę +Y, oś symetrii to płaszczyzna YZ (X = 0).
+### 4.2 Kostka 20×60×70
+1. Outliner: PPM → *New Collection* → `model`.
+2. `Shift+A` → *Cube*. `Tab`, `A`, potem kolejno: `S X 0.3 Enter`, `S Y 0.35 Enter`, `S Z 0.1 Enter` (domyślna kostka ma 2 m, więc wychodzi 0.6 × 0.7 × 0.2). Następnie `G Y 0.35 Enter`, żeby przód leżał na XZ. Origin zostaje w (0,0,0).
+   Kontrola: Object Mode → `N` → Dimensions 0.6 / 0.7 / 0.2, Scale 1.
+3. `Ctrl+R` pętla na środku (X = 0) → zaznacz lewą połowę → `X` → *Vertices*.
+4. *Add Modifier → Mirror*: Axis X, Clipping wł., Merge 0.01 m.
+5. Z.4.2.2: `Ctrl+R` dodaj pętle w miejscach wypustek: X = 0.05 / 0.2 / 0.25, Y = 0.1 / 0.2 / 0.35 / 0.6.
 
-| Element | Wymiary / położenie |
-|---|---|
-| Podstawa | 60 (X) × 70 (Y) × 20 (Z); X −30…30, Y 0…70, Z 0…20 |
-| Część dolna | szer. 40 (2×R20), grub. 20 (Y 0…20), środek otworu 60 pod spodem podstawy (Z = −60), dół R20, przejście do podstawy R10 |
-| Otwór dolny | ⌀15 przelotowy |
-| Cylinder | ⌀50 × 40, oś równoległa do Y na wysokości Z = 80 (**60 nad górą podstawy**), Y 35…75 (35 od przodu podstawy) |
-| Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
-| Tylna ścianka | pełna (bez wycięcia), od góry podstawy do osi cylindra Z = 80, grub. 10 (Y 60…70, czyli 25 za przodem cylindra), u dołu szer. 60 (cała podstawa), zwęża się do 50 – styczna do cylindra |
-| Podpórka | **pełna ścianka** grub. 10 (środek, X −5…5): skos od przedniej krawędzi podstawy do **dolnej krawędzi** przodu cylindra, pod skosem wypełniona aż do podstawy, cylindra i tylnej ścianki – bez pustej przestrzeni |
+### 4.3
+1. Spód X 0…0.2, Y 0…0.2 → `E` → `Z -0.8`. Pętla na Z = −0.7 (środek otworu).
+2. Bevel `Ctrl+B`, Segments 16: dolna krawędź Width 0.2 (R20), krawędź przy podstawie Width 0.1 (R10).
+3. Na górze podstawy zaznacz pas X 0…0.05 (podpórka) i Y 0.6…0.7 (tylna ścianka) → `E` → `Z 0.6`. Zewnętrzne górne werteksy ścianki przesuń z X = 0.3 na 0.25. Górne werteksy podpórki ustaw na skos od przedniej krawędzi podstawy (Z = 0.1) do dołu cylindra (Y = 0.35, Z ≈ 0.46). Pod skosem zostaje pełna ścianka.
+4. `Shift+A` → *Cylinder*: Location (0, 0.55, 0.7), Rotation X 90, Scale 0.25 / 0.25 / 0.2 → kolekcja `model`.
 
-## Wykonanie krok po kroku (ręcznie w Blenderze)
+### 4.4
+1. Nowa kolekcja `wycinanie`. Kursor w środek otworu (`Shift+S` → *Cursor to Selected*) → `Shift+A` *Cylinder*:
+   * `Cylinder.001`: Location (0, 0.55, 0.7), Rot X 90, Scale 0.1 / 0.1 / 0.25 (⌀20),
+   * `Cylinder.002`: Location (0, 0.1, −0.7), Rot X 90, Scale 0.075 / 0.075 / 0.15 (⌀15),
+   * `Cylinder.003`: Location (0, 0.375, 0.7), Rot X 90, Scale 0.15 / 0.15 / 0.035 (⌀30 × 6) + *Mirror* (Axis Z, Mirror Object: `Cylinder`) → pogłębienie z obu stron.
+2. Wyłącz oko przy kolekcji `wycinanie`.
+3. Na `Cube` i `Cylinder`: *Add Modifier → Boolean*, Difference, Operand Type **Collection** → `wycinanie`, Solver **Exact**.
 
-### Zadanie 4.1 – przygotowanie Blendera
-1. *File → New → General*, zaznacz kostkę, kamerę i światło → `X` → *Delete*.
-2. *Scene Properties → Units*: Unit System *Metric*, Unit Scale `0.001`, Length *Millimeters*. W Viewport → `N` → *View* ustaw *Clip End* np. 5000.
-3. Przeciągnij lewą krawędź okna (lub wejdź w zakładkę *UV Editing*), by mieć **Viewport 3D** i **Image Editor** obok siebie.
-4. W Image Editor: *Image → Open* → `blueprint.png`.
+### 4.5
+1. Kolekcja `obiekt_mods` → przeciągnij do niej `model` i `wycinanie`.
+2. PPM na `obiekt_mods` → *Duplicate Collection* → nazwij `obiekt_final`; wyłącz oko przy `obiekt_mods`.
+3. W `obiekt_final` *Apply* modyfikatory: najpierw obiekty z `wycinanie.001`, potem `Cylinder.004`, potem `Cube.001`.
+4. Na `Cube.001`: *Boolean → Union*, Object `Cylinder.004` → *Apply*. Ukryj `Cylinder.004`.
 
-### Zadanie 4.2 – kształt podstawowy
-1. W Outlinerze: PPM → *New Collection* → nazwij `model`.
-2. **Kostka 20×60×70 (Z.4.2.1)**: `Shift+A` → *Mesh → Cube*. Domyślna kostka ma 2×2×2 i środek w (0,0,0). Skalujemy ją w **Edit Mode**, żeby Object Origin został w World Origin, a skala obiektu = 1:
-   * `Tab` (Edit Mode) → `A` (zaznacz wszystko),
-   * wpisz z klawiatury: `S` `X` `0.3` `Enter` (szer. 60), `S` `Y` `0.35` `Enter` (głęb. 70), `S` `Z` `0.1` `Enter` (wys. 20). Przy domyślnych jednostkach (metrach) wyjdzie 0.6 × 0.7 × 0.2 m, tak jak u prowadzącego (0.1 m = 10 mm),
-   * przód styczny z płaszczyzną XZ: `G` `Y` `0.35` `Enter`. Siatka zajmuje wtedy Y 0…0.7, a przód (strona widoczna w `Numpad 1`) leży na Y = 0. Opcjonalnie `G` `Z` `0.1`, żeby spód leżał na Z = 0.
-   * kontrola: `N` → *Item*. Zaznacz ścianę przednią, *Median Y* = 0. W Object Mode *Dimensions* = 0.6 / 0.7 / 0.2, *Scale* = 1, *Location* = 0.
-   * jeśli wolisz milimetry (jak w moim pliku): *Scene Properties → Units* → Unit Scale `0.001`, Length *Millimeters*. Wtedy `S X 30`, `S Y 35`, `S Z 10`, `G Y 35`.
-3. `M` → przenieś do kolekcji `model`.
-4. Edit Mode → `Ctrl+R` → pętla krawędzi w połowie (płaszczyzna YZ, X = 0). Zaznacz wierzchołki z X < 0 → `X` → *Vertices*.
-5. *Modifiers → Add → Generate → Mirror*: Axis **X**, *Bisect* wył., *Clipping* **wł.**, *Merge* **wł.**, 0.01.
-6. **Z.4.2.2** – dodaj pętle krawędzi (`Ctrl+R`, potem wpisz wartość przesunięcia) w miejscach wypustek: X = 20 (bok części dolnej), X = 25 (bok tylnej ścianki), X = 5 (żebro), Y = 20 (tył części dolnej), Y = 60 (przód tylnej ścianki).
+Wynik: `Cube.001` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 241 339 mm³ z rysunku).
 
-### Zadanie 4.3 – rozbudowa obiektu bazowego
-**4.3.1 Część dolna**
-1. Zaznacz na spodzie ścianę X 0…20, Y 0…20 → `E` → wyciągnij w dół o **80** (`E`, `Z`, `-80`).
-2. `Ctrl+R` dodaj pętle wyznaczające początek i koniec zaokrągleń (Z = −10 przy podstawie, Z = −60 na środku otworu). Zbędne cięcia usuń: zaznacz → `X` → *Dissolve Edges/Vertices*.
-
-**4.3.2 Zaokrąglenia**
-1. Krawędź dolna zewnętrzna (X = 20, Z = −80) → `Ctrl+B` (Bevel), *Width* **20**, *Segments* **16** → po odbiciu daje półokrąg R20.
-2. Krawędź wewnętrzna między spodem podstawy a bokiem części dolnej (X = 20, Z = 0) → `Ctrl+B`, *Width* **10**, *Segments* **16** → R10.
-
-**4.3.3 Część górna**
-1. (1) Na górze podstawy zaznacz ścianę X 0…25, Y 60…70 → `E` → wyciągnij do Z = 80 (o 60); zewnętrzne górne werteksy przesuń z X = 30 na X = 25 (zwężenie do stycznej z cylindrem) – to tylna ścianka gr. 10.
-2. (2) `Shift+A` → *Cylinder*: Vertices 64, Radius 25, Depth 40. Obróć `R X 90`. Ustaw Location: X 0, Y 55, Z 80 (przód na Y = 35). Przenieś do kolekcji `model`. Można też użyć *Snap → Vertex → Closest*.
-3. (3) Podpórka: dodaj pętlę Y = 35. Zaznacz na górze podstawy pas ścian X 0…5 od Y = 0 do tylnej ścianki i wyciągnij go razem z tylną ścianką (jeden extrude o 60).
-4. (4) Ustaw górne werteksy pasa na skos: Y = 0 → Z = 20 (scal z krawędzią podstawy, `M` → *By Distance*), Y = 10 → Z = 32, Y = 20 → Z = 44, Y = 35 → Z = 56 (dół przodu cylindra). Pod skosem zostaje **pełna ścianka** – nic nie wycinamy. Brakujące ściany uzupełnij `F` (Fill).
-5. (5) Powtórz dla pozostałych kątowników (tylna ścianka styczna do cylindra).
-
-### Zadanie 4.4 – otwory
-1. Nowa kolekcja `wycięcia`.
-2. Ustaw kursor w środku otworu (`Shift+S` → *Cursor to Selected* na zaznaczonych wierzchołkach albo `N` → *View → 3D Cursor*), potem `Shift+A` → *Cylinder* – pojawi się w miejscu kursora:
-   * `otwor_fi20`: R 10, dł. 50, oś Y, środek (0, 55, 80),
-   * `poglebienie_fi30x6`: R 15, Y 34…41 (6 mm w głąb cylindra + 1 mm zapasu). Dodaj **Mirror** oś **Y** z *Mirror Object* = Empty w środku cylindra (0, 55, 80) → pogłębienie po obu stronach,
-   * `otwor_fi15`: R 7.5, dł. 30, oś Y, środek (0, 10, −60).
-3. W Outlinerze wyłącz widoczność kolekcji `wycięcia` (ikonka oka / ekranu).
-4. Na **podstawie** i **cylindrze**: *Add Modifier → Generate → Boolean*, **Difference**, *Operand Type* **Collection** → `wycięcia`. (W kolekcji muszą być same siatki – Empty trzymaj poza nią.)
-
-### Zadanie 4.5 – oczyszczenie modelu
-1. Utwórz kolekcję `obiekt_mods` i przeciągnij do niej `model` i `wycięcia`.
-2. PPM na `obiekt_mods` → *Duplicate Collection* → nazwij `obiekt_final`; ukryj `obiekt_mods`. Dalej pracuj tylko na kopii (w kopii Boolean musi wskazywać na **kopię** kolekcji wycięć).
-3. Sprawdź model pod kątem nakładających się ścian (*Edit Mode → Select → Select All by Trait → Non Manifold*, `M` → *Merge by Distance*).
-4. *Apply* (`Ctrl+A` → *Apply All Modifiers* / menu modyfikatora → *Apply*): najpierw na obiektach wycięć, potem na cylindrze, potem na podstawie (Mirror, potem Boolean).
-5. Na podstawie dodaj **Boolean → Union** z obiektem cylinder → *Apply*. Usuń cylinder (jest już częścią bryły).
-
-Wynik: obiekt `wspornik_final` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 242 389 mm³).
-
-## Uruchomienie skryptu
+## Uruchomienie skryptów
 ```
-blender --background --python build_model.py                    # wersja z paskami
-LAB4_SMOOTH=1 blender --background --python build_model.py      # wersja gładka
+blender --background --python build_model.py                  # wersja z paskami
+LAB4_SMOOTH=1 blender --background --python build_model.py    # wersja gładka
+blender --background --python build_half.py                    # wersja do połowy
 ```
-Wynik trafi do `output/`.

@@ -1,7 +1,8 @@
 """
 Laboratorium/Projekt 4 - Algebra Boole'a na obiektach technicznych.
 Skrypt odtwarza w Blenderze wspornik z blueprintu (rzut izometryczny),
-krok po kroku wg zadań 4.1-4.5. Jednostki: 1 BU = 1 mm.
+krok po kroku wg zadań 4.1-4.5. Jednostki jak u prowadzącego: metry,
+1 mm z rysunku = 0.01 m (podstawa 0.6 x 0.7 x 0.2 m, środek podstawy w World Origin).
 
 Uruchomienie:
   blender --background --python build_model.py
@@ -123,27 +124,72 @@ def link(ob, coll):
     coll.objects.link(ob)
 
 
+K = 0.01          # 1 mm z rysunku = 0.01 m w Blenderze (jak w instrukcji)
+ZO = -BASE_H / 2  # podstawa wyśrodkowana w Z (kostka nieprzesuwana w osi Z)
+
+
+def to_scene(ob):
+    """Siatka zbudowana w mm -> skala sceny (m), środek podstawy w Z = 0."""
+    for v in ob.data.vertices:
+        v.co = Vector((v.co.x * K, v.co.y * K, (v.co.z + ZO) * K))
+    ob.data.update()
+
+
+def prim_cylinder(coll, r, y0, y1, z, verts=None):
+    """Shift+A > Cylinder (r=1, depth=2), Rotation X 90, Scale jak w instrukcji."""
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=verts or CYL_VERTS, radius=1, depth=2,
+        location=(0, K * (y0 + y1) / 2, K * (z + ZO)), rotation=(math.radians(90), 0, 0))
+    ob = bpy.context.active_object
+    ob.scale = (K * r, K * r, K * (y1 - y0) / 2)
+    link(ob, coll)
+    return ob
+
+
+def bisect(ob, planes):
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    for co, no in planes:
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-6)
+    bm.to_mesh(ob.data)
+    bm.free()
+
+
+def lc(name, parent=None):
+    """layer collection (oko w Outlinerze)"""
+    root = parent or bpy.context.view_layer.layer_collection
+    for ch in root.children:
+        if ch.name == name:
+            return ch
+        found = lc(name, ch)
+        if found:
+            return found
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Zadanie 4.1 - przygotowanie sceny i blueprintu
 # ---------------------------------------------------------------------------
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.unit_settings.system = 'METRIC'
-scene.unit_settings.scale_length = 0.001   # 1 BU = 1 mm
-scene.unit_settings.length_unit = 'MILLIMETERS'
+scene.unit_settings.scale_length = 1.0
+scene.unit_settings.length_unit = 'METERS'
 
 blueprint = bpy.data.images.load(os.path.join(HERE, "blueprint.png"))
 blueprint.pack()                            # obraz zapisany wewnątrz .blend
 
-col_model = bpy.data.collections.new("model")
-col_cuts = bpy.data.collections.new("wycięcia")
+# kolekcje jak w instrukcji: obiekt_mods > model, wycinanie
 col_mods = bpy.data.collections.new("obiekt_mods")
+col_model = bpy.data.collections.new("model")
+col_cuts = bpy.data.collections.new("wycinanie")
 scene.collection.children.link(col_mods)
 col_mods.children.link(col_model)
 col_mods.children.link(col_cuts)
 
 # ---------------------------------------------------------------------------
-# Zadanie 4.2 / 4.3 - obiekt bazowy (połowa + Mirror X)
+# Zadanie 4.2 / 4.3 - obiekt bazowy "Cube" (połowa + Mirror X)
 # Przód podstawy styczny z płaszczyzną XZ (Y = 0), origin w World Origin.
 # ---------------------------------------------------------------------------
 hw = BASE_W / 2
@@ -153,22 +199,21 @@ parts = []
 parts.append(prism_from_profile(
     "p_base", [(0, 0), (hw, 0), (hw, BASE_H), (0, BASE_H)], 'Y', 0, BASE_D))
 
-# 4.3.1-4.3.2 dolna część wyciągnięta z podstawy, zaokrąglenia R10 i R20 (16 segm.)
+# 4.3.1-4.3.2 dolna część wyciągnięta z podstawy, zaokrąglenia R10 i R20
 tab = [(0, 5), (hw, 5), (hw, 0)]
 tab += arc(hw, -FILLET_R, FILLET_R, 90, 180)[1:]                 # R10
 tab += [(TAB_W / 2, TAB_HOLE_Z)]
 tab += arc(0, TAB_HOLE_Z, TAB_R, 0, -90)[1:]                     # R20
 parts.append(prism_from_profile("p_tab", tab, 'Y', 0, TAB_T))
 
-# 4.3.3 tylna ścianka (kątownik) styczna do cylindra, gr. 10
+# 4.3.3 (1) tylna ścianka gr. 10, zwężona do stycznej z cylindrem
 plate_y0 = CYL_Y0 + 25                                           # = 60
 parts.append(prism_from_profile(
     "p_plate", [(0, BASE_H - 5), (hw, BASE_H - 5), (hw, BASE_H), (CYL_D / 2, CYL_Z), (0, CYL_Z)],
     'Y', plate_y0, plate_y0 + PLATE_T))
 
-# 4.3.3 (4)-(5) podpórka: pełna ścianka gr. 10 pod skosem, od przedniej krawędzi
-# podstawy do cylindra i dalej do tylnej ścianki (bez pustej przestrzeni)
-# skos dochodzi do DOŁU cylindra (dolna krawędź przodu cylindra)
+# 4.3.3 (3)-(5) podpórka: pełna ścianka gr. 10 pod skosem, od przedniej krawędzi
+# podstawy do dołu cylindra i dalej do tylnej ścianki
 RIB_TOP = CYL_Z - CYL_D / 2 + 1
 rib = [(0, BASE_H - 5), (0, BASE_H), (CYL_Y0, RIB_TOP), (plate_y0 + 5, RIB_TOP),
        (plate_y0 + 5, BASE_H - 5)]
@@ -177,10 +222,7 @@ parts.append(prism_from_profile("p_rib", rib, 'X', 0, RIB_T / 2))
 for p in parts:
     col_model.objects.link(p)
 
-# scalenie składowych połowy w jeden obiekt "podstawa"
 base = parts[0]
-base.name = "podstawa"
-base.data.name = "podstawa"
 for p in parts[1:]:
     boolean(base, 'UNION', operand_object=p)
 apply_all_modifiers(base)
@@ -188,123 +230,89 @@ for p in parts[1:]:
     bpy.data.objects.remove(p)
 cleanup(base)
 if not SMOOTH:
-    # 4.2.2 / 4.3.1 pętle krawędzi na połówce podstawy - każda ściana osobno do zaznaczenia
-    bm = bmesh.new()
-    bm.from_mesh(base.data)
-    planes = [((x, 0, 0), (1, 0, 0)) for x in (5, 20, 25)]
-    planes += [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60)]
-    planes += [((0, 0, z), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60)]
-    for co, no in planes:
-        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
-        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-4)
-    bm.to_mesh(base.data)
-    bm.free()
-
-# usunięcie ścian leżących w płaszczyźnie symetrii X = 0 (otwarta połowa)
+    # 4.2.2 / 4.3.1 pętle krawędzi - każda ściana osobno do zaznaczenia
+    bisect(base, [((x, 0, 0), (1, 0, 0)) for x in (5, 20, 25)] +
+                 [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60)] +
+                 [((0, 0, z), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60)])
+# otwarta połowa: bez ścian w płaszczyźnie symetrii X = 0
 bm = bmesh.new()
 bm.from_mesh(base.data)
 bmesh.ops.delete(bm, geom=[f for f in bm.faces
                            if all(abs(v.co.x) < 1e-4 for v in f.verts)], context='FACES')
 bm.to_mesh(base.data)
 bm.free()
+to_scene(base)
+base.name = "Cube"
+base.data.name = "Cube"
 
 mir = base.modifiers.new("Mirror", 'MIRROR')
 mir.use_axis = (True, False, False)
 mir.use_clip = True
 mir.use_mirror_merge = True
-mir.merge_threshold = 0.01
+mir.merge_threshold = 0.01                   # Merge 0.01 m (wg instrukcji)
 
-# 4.3.3 (2) cylinder fi50 x 40
-cyl = cylinder_y("cylinder", CYL_D / 2, CYL_Y0, CYL_Y0 + CYL_L, z=CYL_Z)
-col_model.objects.link(cyl)
+# 4.3.3 (2) cylinder fi50 x 40 -> Dimensions 0.5 x 0.5 x 0.4 m, Z = 0.7 m
+cyl = prim_cylinder(col_model, CYL_D / 2, CYL_Y0, CYL_Y0 + CYL_L, CYL_Z)    # "Cylinder"
 
 # ---------------------------------------------------------------------------
-# Zadanie 4.4 - otwory i wgłębienia (kolekcja "wycięcia", niewidoczna)
+# Zadanie 4.4 - otwory i wgłębienia: kolekcja "wycinanie" (niewidoczna)
 # ---------------------------------------------------------------------------
-cyl_mid = CYL_Y0 + CYL_L / 2
-cuts = [
-    cylinder_y("otwor_fi20", HOLE_D / 2, CYL_Y0 - 5, CYL_Y0 + CYL_L + 5, z=CYL_Z),
-    cylinder_y("poglebienie_fi30x6", CB_D / 2, CYL_Y0 - 1, CYL_Y0 + CB_DEPTH, z=CYL_Z),
-    cylinder_y("otwor_fi15", TAB_HOLE_D / 2, -5, TAB_T + 5, z=TAB_HOLE_Z),
-]
-for c in cuts:
-    col_cuts.objects.link(c)
-    c.display_type = 'WIRE'
+c_hole = prim_cylinder(col_cuts, HOLE_D / 2, CYL_Y0 - 5, CYL_Y0 + CYL_L + 5, CYL_Z)   # .001 fi20
+c_tab = prim_cylinder(col_cuts, TAB_HOLE_D / 2, -5, TAB_T + 5, TAB_HOLE_Z)            # .002 fi15
+c_cb = prim_cylinder(col_cuts, CB_D / 2, CYL_Y0 - 1, CYL_Y0 + CB_DEPTH, CYL_Z)        # .003 fi30x6
+# pogłębienie obustronne: Mirror względem środka cylindra (oś lokalna Z cylindra = Y świata)
+m = c_cb.modifiers.new("Mirror", 'MIRROR')
+m.use_axis = (False, False, True)
+m.mirror_object = cyl
 
-# pogłębienie obustronne -> Mirror Y względem środka cylindra (empty)
-mid = bpy.data.objects.new("srodek_cylindra", None)
-mid.location = (0, cyl_mid, CYL_Z)
-mid.empty_display_size = 10
-col_mods.objects.link(mid)   # poza kolekcją wycięć (Boolean wymaga samych siatek)
-m = cuts[1].modifiers.new("Mirror", 'MIRROR')
-m.use_axis = (False, True, False)
-m.mirror_object = mid
-
-col_cuts.hide_viewport = True
-col_cuts.hide_render = True
-
-# 4.4.1 Boolean Difference z kolekcją "wycięcia"
+# 4.4.1 Boolean Difference, operand: kolekcja "wycinanie"
 for ob in (cyl, base):
-    boolean(ob, 'DIFFERENCE', operand_collection=col_cuts)
+    b = ob.modifiers.new("Boolean", 'BOOLEAN')
+    b.operation = 'DIFFERENCE'
+    b.operand_type = 'COLLECTION'
+    b.collection = col_cuts
+    b.solver = 'EXACT'
 
 # ---------------------------------------------------------------------------
-# Zadanie 4.5 - kopia kolekcji i oczyszczenie modelu
+# Zadanie 4.5 - Duplicate Collection "obiekt_mods" -> "obiekt_final"
 # ---------------------------------------------------------------------------
 col_final = bpy.data.collections.new("obiekt_final")
 scene.collection.children.link(col_final)
-col_f_model = bpy.data.collections.new("model_final")
-col_f_cuts = bpy.data.collections.new("wycięcia_final")
+col_f_model = bpy.data.collections.new("model")          # -> "model.001"
+col_f_cuts = bpy.data.collections.new("wycinanie")       # -> "wycinanie.001"
 col_final.children.link(col_f_model)
 col_final.children.link(col_f_cuts)
 
 dup = {}
-for ob in list(col_model.objects) + list(col_cuts.objects) + list(col_mods.objects):
-    c = ob.copy()
-    if ob.data:
+for src, dst in ((col_model, col_f_model), (col_cuts, col_f_cuts)):
+    for ob in src.objects:
+        c = ob.copy()                                    # Cube.001, Cylinder.004 ...
         c.data = ob.data.copy()
-    c.name = ob.name + "_final"
-    if ob.name in col_cuts.objects:
-        col_f_cuts.objects.link(c)
-    elif ob.name in col_model.objects:
-        col_f_model.objects.link(c)
-    else:
-        col_final.objects.link(c)
-    dup[ob.name] = c
-# odwołania w kopiach -> kopie
-dup["poglebienie_fi30x6"].modifiers["Mirror"].mirror_object = dup["srodek_cylindra"]
-for k in ("cylinder", "podstawa"):
-    dup[k].modifiers["Boolean_Difference"].collection = col_f_cuts
+        dst.objects.link(c)
+        dup[ob] = c
+dup[c_cb].modifiers["Mirror"].mirror_object = dup[cyl]
+for k in (cyl, base):
+    dup[k].modifiers["Boolean"].collection = col_f_cuts
 
-# 4.5.3 apply: najpierw wycięcia, potem cylinder, potem podstawa
-col_mods.hide_viewport = True               # oryginał ukryty
-col_mods.hide_render = True
-for k in ("otwor_fi20", "poglebienie_fi30x6", "otwor_fi15"):
+# 4.5.3 apply: najpierw obiekty "wycinanie", potem cylinder, potem obiekt bazowy
+for k in (c_hole, c_tab, c_cb):
     apply_all_modifiers(dup[k])
-apply_all_modifiers(dup["cylinder"])
-apply_all_modifiers(dup["podstawa"])
+apply_all_modifiers(dup[cyl])
+apply_all_modifiers(dup[base])
 
-final = dup["podstawa"]
-boolean(final, 'UNION', operand_object=dup["cylinder"])
+# Boolean > Union obiektu bazowego i cylindra -> apply
+final = dup[base]
+u = final.modifiers.new("Boolean", 'BOOLEAN')
+u.operation = 'UNION'
+u.object = dup[cyl]
+u.solver = 'EXACT'
 apply_all_modifiers(final)
-cleanup(final)
+cleanup(final, dist=1e-6)
 if not SMOOTH:
-    # wersja "z paskami": pętle krawędzi jak w zad. 4.2.2 / 4.3.1 przecinają całą
-    # bryłę, więc na każdej ścianie widać linie siatki (bryła zostaje szczelna)
-    bm = bmesh.new()
-    bm.from_mesh(final.data)
-    planes = [((x, 0, 0), (1, 0, 0)) for x in (-25, -20, -5, 5, 20, 25)]
-    planes += [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60, 70)]
-    planes += [((0, 0, z), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60, 80)]
-    for co, no in planes:
-        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
-        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-4)
-    bm.to_mesh(final.data)
-    bm.free()
-final.name = "wspornik_final"
-final.data.name = "wspornik_final"
-bpy.data.objects.remove(dup["cylinder"])
-col_f_cuts.hide_viewport = True
-col_f_cuts.hide_render = True
+    # linie siatki na całej bryle (te same pętle co na połówce, po obu stronach)
+    bisect(final, [((K * x, 0, 0), (1, 0, 0)) for x in (-25, -20, -5, 5, 20, 25)] +
+                  [((0, K * y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60, 70)] +
+                  [((0, 0, K * (z + ZO)), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60, 80)])
 for p in final.data.polygons:
     p.use_smooth = False
 if SMOOTH:
@@ -318,61 +326,55 @@ if SMOOTH:
 # materiał
 mat = bpy.data.materials.new("stal")
 mat.diffuse_color = (0.55, 0.6, 0.68, 1)
-for ob in (final, base, cyl):
+for ob in (final, base, cyl, dup[cyl]):
     ob.data.materials.append(mat)
 
+# widoczność (oczka w Outlinerze): wycinanie ukryte, obiekt_mods ukryty,
+# pracujemy na obiekt_final; cylinder użyty w Union ukryty
+lc("wycinanie").hide_viewport = True
+lc("wycinanie.001").hide_viewport = True
+col_cuts.hide_render = True
+col_f_cuts.hide_render = True
+lc("obiekt_mods").hide_viewport = True
+col_mods.hide_render = True
+dup[cyl].hide_set(True)
+dup[cyl].hide_render = True
+
 # ---------------------------------------------------------------------------
-# Widok: 3D Viewport + Image Editor z blueprintem (zad. 4.1), kamera, światło
+# Kamera, światło, widok: 3D Viewport + Image Editor z blueprintem (zad. 4.1)
 # ---------------------------------------------------------------------------
 cam_data = bpy.data.cameras.new("Camera")
 cam_data.type = 'ORTHO'
-cam_data.ortho_scale = 250
-cam_data.clip_end = 5000
+cam_data.ortho_scale = 2.5
 cam = bpy.data.objects.new("Camera", cam_data)
-cam.location = (260, -260, 240)
-direction = Vector((0, 35, 15)) - cam.location
-cam.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
+cam.location = (2.6, -2.6, 2.3)
+cam.rotation_euler = (Vector((0, 0.35, 0.05)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
 scene.collection.objects.link(cam)
 scene.camera = cam
 sun = bpy.data.objects.new("Sun", bpy.data.lights.new("Sun", 'SUN'))
 sun.rotation_euler = (math.radians(40), math.radians(10), math.radians(30))
 scene.collection.objects.link(sun)
 
-# statystyki kontrolne
 deps = bpy.context.evaluated_depsgraph_get()
-me = final.evaluated_get(deps).to_mesh()
 bm = bmesh.new()
-bm.from_mesh(me)
-nonman = [e for e in bm.edges if not e.is_manifold]
-print(f"[lab4] wspornik_final: {len(bm.verts)} v, {len(bm.faces)} f, "
-      f"non-manifold edges: {len(nonman)}, volume: {bm.calc_volume():.1f} mm3")
+bm.from_mesh(final.data)
+print(f"[lab4] {final.name}: {len(bm.verts)} v, {len(bm.faces)} f, "
+      f"non-manifold edges: {sum(1 for e in bm.edges if not e.is_manifold)}, "
+      f"volume: {bm.calc_volume() / K ** 3:.1f} mm3")
 bm.free()
-final.evaluated_get(deps).to_mesh_clear()
 
-# Zad. 4.1: obszar roboczy z Viewport 3D obok Image Editor (blueprint)
-ws = bpy.data.workspaces.get("UV Editing")
-if ws:
-    ws.name = "Blueprint"
-    for area in ws.screens[0].areas:
+for scr in bpy.data.screens:
+    for area in scr.areas:
         if area.type == 'IMAGE_EDITOR':
             area.spaces.active.image = blueprint
         if area.type == 'VIEW_3D':
-            area.spaces.active.clip_end = 5000
-            area.spaces.active.overlay.show_wireframes = not SMOOTH
-            area.spaces.active.overlay.wireframe_threshold = 1.0
-            area.spaces.active.overlay.show_extra_edge_length = not SMOOTH
-    bpy.context.window.workspace = ws
-for scr in bpy.data.screens:
-    for area in scr.areas:
-        if area.type == 'VIEW_3D':
-            area.spaces.active.clip_end = 5000
-            area.spaces.active.overlay.show_wireframes = not SMOOTH
-            area.spaces.active.overlay.wireframe_threshold = 1.0
-            area.spaces.active.overlay.show_extra_edge_length = not SMOOTH
+            ov = area.spaces.active.overlay
+            ov.show_wireframes = not SMOOTH
+            ov.wireframe_threshold = 1.0
+            ov.show_extra_edge_length = not SMOOTH
 
-out_dir = os.path.join(HERE, "output") if not os.environ.get("LAB4_OUT") else os.environ["LAB4_OUT"]
+out_dir = os.path.join(HERE, "output")
 os.makedirs(out_dir, exist_ok=True)
-# eksport bryły końcowej (dla starszych wersji Blendera / druku 3D)
 for o in bpy.context.view_layer.objects:
     o.select_set(o == final)
 bpy.context.view_layer.objects.active = final
@@ -380,16 +382,6 @@ bpy.ops.wm.obj_export(filepath=os.path.join(out_dir, f"wspornik_final_{VARIANT}.
                       export_selected_objects=True, export_materials=False)
 bpy.ops.wm.stl_export(filepath=os.path.join(out_dir, f"wspornik_final_{VARIANT}.stl"),
                       export_selected_objects=True)
-if not SMOOTH:
-    # wersja "z paskami": widoczny proces budowy - obiekt_mods (podstawa z Mirror +
-    # Boolean, cylinder, ukryte wycięcia) włączony, obiekt_final wyłączony okiem
-    col_mods.hide_viewport = False
-    col_mods.hide_render = False
-    bpy.context.view_layer.layer_collection.children["obiekt_final"].hide_viewport = True
-    for o in bpy.context.view_layer.objects:
-        o.select_set(o == base)
-    bpy.context.view_layer.objects.active = base
-
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, f"projekt4_wspornik_{VARIANT}.blend"),
                             compress=True)
 print("[lab4] zapisano", out_dir)
