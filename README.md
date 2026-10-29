@@ -7,7 +7,7 @@ Osobny projekt laboratoryjny (nie jest częścią aplikacji *mini-zoom*, leży n
 | Plik | Co to jest |
 |---|---|
 | `output/projekt4_wspornik_gladki.blend` | **Wersja końcowa GŁADKA** – bez pasków: 128 segmentów cylindra, 32 segmenty zaokrągleń, *Shade Smooth by Angle* 30° |
-| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa Z PASKAMI** – płaskie cieniowanie, widoczne ścianki (64 segmenty, 16 segm. zaokrągleń wg instrukcji). Oba pliki: kolekcje `obiekt_mods` (model + wycięcia z modyfikatorami) i `obiekt_final` (bryła po apply i Union), blueprint spakowany w pliku |
+| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa Z PASKAMI** – widoczne wszystkie linie siatki: bryła przecięta pętlami krawędzi (X ±5/±20/±25, Y 10…70, Z −60…80), bevele 16 segm., w Viewport włączone *Overlays → Wireframe* i *Edge Length*. Linie można wyłączyć/włączyć: *Overlays* (ikona dwóch kółek nad widokiem) → *Wireframe*. Oba pliki: kolekcje `obiekt_mods` (model + wycięcia z modyfikatorami) i `obiekt_final` (bryła po apply i Union), blueprint spakowany w pliku |
 | `output/wspornik_final_gladki.*`, `output/wspornik_final_paski.*` (`.obj`, `.stl`) | Sama bryła końcowa (do importu w starszym Blenderze / druku 3D) |
 | `output/projekt4_polowa.blend` | **Wersja zrobiona do połowy** (stan w trakcie pracy – patrz niżej) |
 | `build_half.py` | Skrypt budujący wersję do połowy |

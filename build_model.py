@@ -275,6 +275,19 @@ final = dup["podstawa"]
 boolean(final, 'UNION', operand_object=dup["cylinder"])
 apply_all_modifiers(final)
 cleanup(final)
+if not SMOOTH:
+    # wersja "z paskami": pętle krawędzi jak w zad. 4.2.2 / 4.3.1 przecinają całą
+    # bryłę, więc na każdej ścianie widać linie siatki (bryła zostaje szczelna)
+    bm = bmesh.new()
+    bm.from_mesh(final.data)
+    planes = [((x, 0, 0), (1, 0, 0)) for x in (-25, -20, -5, 5, 20, 25)]
+    planes += [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60, 70)]
+    planes += [((0, 0, z), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60, 80)]
+    for co, no in planes:
+        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-4)
+    bm.to_mesh(final.data)
+    bm.free()
 final.name = "wspornik_final"
 final.data.name = "wspornik_final"
 bpy.data.objects.remove(dup["cylinder"])
@@ -333,11 +346,17 @@ if ws:
             area.spaces.active.image = blueprint
         if area.type == 'VIEW_3D':
             area.spaces.active.clip_end = 5000
+            area.spaces.active.overlay.show_wireframes = not SMOOTH
+            area.spaces.active.overlay.wireframe_threshold = 1.0
+            area.spaces.active.overlay.show_extra_edge_length = not SMOOTH
     bpy.context.window.workspace = ws
 for scr in bpy.data.screens:
     for area in scr.areas:
         if area.type == 'VIEW_3D':
             area.spaces.active.clip_end = 5000
+            area.spaces.active.overlay.show_wireframes = not SMOOTH
+            area.spaces.active.overlay.wireframe_threshold = 1.0
+            area.spaces.active.overlay.show_extra_edge_length = not SMOOTH
 
 out_dir = os.path.join(HERE, "output") if not os.environ.get("LAB4_OUT") else os.environ["LAB4_OUT"]
 os.makedirs(out_dir, exist_ok=True)
