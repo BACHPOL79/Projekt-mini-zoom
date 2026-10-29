@@ -48,7 +48,7 @@ obiekt_final                            ← Duplicate Collection, modyfikatory z
 | Element | Wymiary |
 |---|---|
 | Podstawa | 60 × 70 × 20 → 0.6 × 0.7 × 0.2 |
-| Część dolna | szer. 40 (2×R20), grub. 20 (Y 0…0.2), środek otworu 60 pod spodem podstawy (Z = −0.7), dół R20, przejście R10 |
+| Część dolna | szer. 40 (2×R20), grub. 20 (Y 0…0.2), środek otworu **60 pod górą podstawy** (40 pod spodem, Z = −0.5), dół R20 (60 pod spodem), przejście R10 |
 | Otwór dolny | ⌀15 przelotowy |
 | Cylinder | ⌀50 × 40, oś 60 nad górą podstawy (Z = 0.7), Y 0.35…0.75 |
 | Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
@@ -78,7 +78,7 @@ Plik otwiera się w Edit Mode z zaznaczonymi ścianami do następnego extrude. K
 5. Z.4.2.2: `Ctrl+R` dodaj pętle w miejscach wypustek: X = 0.05 / 0.2 / 0.25, Y = 0.1 / 0.2 / 0.35 / 0.6.
 
 ### 4.3
-1. Spód X 0…0.2, Y 0…0.2 → `E` → `Z -0.8`. Pętla na Z = −0.7 (środek otworu).
+1. Spód X 0…0.2, Y 0…0.2 → `E` → `Z -0.6`. Pętla na Z = −0.5 (środek otworu, 60 mm pod górą podstawy).
 2. Bevel `Ctrl+B`, Segments 16: dolna krawędź Width 0.2 (R20), krawędź przy podstawie Width 0.1 (R10).
 3. Na górze podstawy zaznacz pas X 0…0.05 (podpórka) i Y 0.6…0.7 (tylna ścianka) → `E` → `Z 0.6`. Zewnętrzne górne werteksy ścianki przesuń z X = 0.3 na 0.25. Górne werteksy podpórki ustaw na skos od przedniej krawędzi podstawy (Z = 0.1) do dołu cylindra (Y = 0.35, Z ≈ 0.46). Pod skosem zostaje pełna ścianka.
 4. `Shift+A` → *Cylinder*: Location (0, 0.55, 0.7), Rotation X 90, Scale 0.25 / 0.25 / 0.2 → kolekcja `model`.
@@ -86,7 +86,7 @@ Plik otwiera się w Edit Mode z zaznaczonymi ścianami do następnego extrude. K
 ### 4.4
 1. Nowa kolekcja `wycinanie`. Kursor w środek otworu (`Shift+S` → *Cursor to Selected*) → `Shift+A` *Cylinder*:
    * `Cylinder.001`: Location (0, 0.55, 0.7), Rot X 90, Scale 0.1 / 0.1 / 0.25 (⌀20),
-   * `Cylinder.002`: Location (0, 0.1, −0.7), Rot X 90, Scale 0.075 / 0.075 / 0.15 (⌀15),
+   * `Cylinder.002`: Location (0, 0.1, −0.5), Rot X 90, Scale 0.075 / 0.075 / 0.15 (⌀15),
    * `Cylinder.003`: Location (0, 0.375, 0.7), Rot X 90, Scale 0.15 / 0.15 / 0.035 (⌀30 × 6) + *Mirror* (Axis Z, Mirror Object: `Cylinder`) → pogłębienie z obu stron.
 2. Wyłącz oko przy kolekcji `wycinanie`.
 3. Na `Cube` i `Cylinder`: *Add Modifier → Boolean*, Difference, Operand Type **Collection** → `wycinanie`, Solver **Exact**.
@@ -97,7 +97,7 @@ Plik otwiera się w Edit Mode z zaznaczonymi ścianami do następnego extrude. K
 3. W `obiekt_final` *Apply* modyfikatory: najpierw obiekty z `wycinanie.001`, potem `Cylinder.004`, potem `Cube.001`.
 4. Na `Cube.001`: *Boolean → Union*, Object `Cylinder.004` → *Apply*. Ukryj `Cylinder.004`.
 
-Wynik: `Cube.001` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 241 339 mm³ z rysunku).
+Wynik: `Cube.001` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 225 339 mm³ z rysunku).
 
 ## Uruchomienie skryptów
 ```

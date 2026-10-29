@@ -65,15 +65,15 @@ for x in (5, 20, 25):
 for y in (10, 20, 35, 60):
     cut(bm, (0, y, 0), (0, 1, 0))
 
-# --- 4.3.1 część dolna: extrude ściany spodu w dół o 80 ----------------------
+# --- 4.3.1 część dolna: extrude ściany spodu w dół o 60 ----------------------
 bottom = [f for f in bm.faces if f.normal.z < -0.99 and
           all(v.co.x <= 20 + 1e-3 and v.co.y <= 20 + 1e-3 for v in f.verts)]
 ext = bmesh.ops.extrude_face_region(bm, geom=bottom)
 bmesh.ops.delete(bm, geom=bottom, context='FACES')
 verts = [g for g in ext["geom"] if isinstance(g, bmesh.types.BMVert)]
-bmesh.ops.translate(bm, verts=verts, vec=(0, 0, -80))
+bmesh.ops.translate(bm, verts=verts, vec=(0, 0, -60))
 # pętla na wysokości środka otworu (koniec zaokrąglenia R20)
-cut(bm, (0, 0, -60), (0, 0, 1))
+cut(bm, (0, 0, -40), (0, 0, 1))
 bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
 
 # --- 4.3.2 zaokrąglenia Bevel, 16 segmentów ----------------------------------
@@ -83,7 +83,7 @@ bmesh.ops.bevel(bm, geom=e10 + list({v for e in e10 for v in e.verts}),
                 offset=10, offset_type='OFFSET', segments=16, profile=0.5,
                 affect='EDGES', clamp_overlap=False)
 # R20 - dół części dolnej (bevel prawie na całą szerokość połówki)
-e20 = edges_where(bm, lambda c: near(c.x, 20) and near(c.z, -80))
+e20 = edges_where(bm, lambda c: near(c.x, 20) and near(c.z, -60))
 bmesh.ops.bevel(bm, geom=e20 + list({v for e in e20 for v in e.verts}),
                 offset=19.98, offset_type='OFFSET', segments=16, profile=0.5,
                 affect='EDGES', clamp_overlap=False)
@@ -122,7 +122,7 @@ for ob in (base, cyl):
     ob.data.materials.append(mat)
 
 # 3D kursor w miejscu przyszłego otworu fi15 (przygotowanie do 4.4)
-scene.cursor.location = (0, 0.1, -0.7)
+scene.cursor.location = (0, 0.1, -0.5)
 
 # --- notatki postępu (zakładka Scripting) ------------------------------------
 txt = bpy.data.texts.new("POSTEP_PRACY.txt")
@@ -130,12 +130,12 @@ txt.write("""PROJEKT 4 - STAN PRACY
 [x] 4.1   scena (metry, 1 mm = 0.01 m), blueprint w Image Editor (zakładka UV Editing)
 [x] 4.2.1 kostka 60x70x20, podział YZ, połowa usunięta, Mirror X + Clipping
 [x] 4.2.2 pętle krawędzi: X=5, 20, 25 / Y=10, 20, 35, 60
-[x] 4.3.1 część dolna wyciągnięta o 80, cięcie Z=-60
+[x] 4.3.1 część dolna wyciągnięta o 60, cięcie Z=-40 (środek otworu, 60 pod górą podstawy)
 [x] 4.3.2 Bevel R10 i R20, 16 segmentów
 [~] 4.3.3 (2) cylinder fi50x40 dodany - TRZEBA go osadzić: Location (0, 0.55, 0.7)
 [ ] 4.3.3 (1) tylna ścianka gr.10 do Z=80, zwężona do stycznej (zaznaczone ściany)
 [ ] 4.3.3 (3)-(5) podpórka - pełna ścianka gr.10 pod skosem do cylindra
-[ ] 4.4   kolekcja "wycinanie": fi20, pogłębienie fi30x6 (Mirror), fi15 (kursor już ustawiony w (0, 0.1, -0.7))
+[ ] 4.4   kolekcja "wycinanie": fi20, pogłębienie fi30x6 (Mirror), fi15 (kursor już ustawiony w (0, 0.1, -0.5))
 [ ] 4.4   Boolean Difference -> kolekcja "wycinanie"
 [ ] 4.5   obiekt_mods (model + wycinanie) -> Duplicate Collection -> obiekt_final, apply, Union
 """)

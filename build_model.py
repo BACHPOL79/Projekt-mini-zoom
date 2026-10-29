@@ -29,7 +29,7 @@ if SMOOTH:
 # ---------------------------------------------------------------------------
 BASE_W, BASE_D, BASE_H = 60, 70, 20        # podstawa 60 x 70 x 20
 TAB_W, TAB_T = 40, 20                      # dolna część: szer. 2xR20, grubość 20
-TAB_HOLE_Z = -60                           # środek otworu fi15: 60 pod podstawą
+TAB_HOLE_Z = BASE_H - 60                   # środek otworu fi15: 60 pod GÓRĄ podstawy (Z = -40)
 TAB_R, FILLET_R = 20, 10                   # R20 na dole, R10 przy podstawie
 TAB_HOLE_D = 15
 CYL_D, CYL_L = 50, 40                      # cylinder fi50 x 40
@@ -233,7 +233,7 @@ if not SMOOTH:
     # 4.2.2 / 4.3.1 pętle krawędzi - każda ściana osobno do zaznaczenia
     bisect(base, [((x, 0, 0), (1, 0, 0)) for x in (5, 20, 25)] +
                  [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60)] +
-                 [((0, 0, z), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60)])
+                 [((0, 0, z), (0, 0, 1)) for z in (-40, -20, 10, 40, 60)])
 # otwarta połowa: bez ścian w płaszczyźnie symetrii X = 0
 bm = bmesh.new()
 bm.from_mesh(base.data)
@@ -312,7 +312,7 @@ if not SMOOTH:
     # linie siatki na całej bryle (te same pętle co na połówce, po obu stronach)
     bisect(final, [((K * x, 0, 0), (1, 0, 0)) for x in (-25, -20, -5, 5, 20, 25)] +
                   [((0, K * y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60, 70)] +
-                  [((0, 0, K * (z + ZO)), (0, 0, 1)) for z in (-60, -40, -20, 10, 40, 60, 80)])
+                  [((0, 0, K * (z + ZO)), (0, 0, 1)) for z in (-40, -20, 10, 40, 60, 80)])
 for p in final.data.polygons:
     p.use_smooth = False
 if SMOOTH:
