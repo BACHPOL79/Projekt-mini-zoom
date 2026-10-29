@@ -103,7 +103,7 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 4. *Apply* (`Ctrl+A` → *Apply All Modifiers* / menu modyfikatora → *Apply*): najpierw na obiektach wycięć, potem na cylindrze, potem na podstawie (Mirror, potem Boolean).
 5. Na podstawie dodaj **Boolean → Union** z obiektem cylinder → *Apply*. Usuń cylinder (jest już częścią bryły).
 
-Wynik: obiekt `wspornik_final` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 216 465 mm³).
+Wynik: obiekt `wspornik_final` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 231 016 mm³).
 
 ## Uruchomienie skryptu
 ```
