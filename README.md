@@ -6,8 +6,9 @@ Osobny projekt laboratoryjny (nie jest częścią aplikacji *mini-zoom*, leży n
 
 | Plik | Co to jest |
 |---|---|
-| `output/projekt4_wspornik.blend` | **Gotowy plik Blendera**: kolekcje `obiekt_mods` (model + wycięcia z modyfikatorami) i `obiekt_final` (bryła po apply i Union), blueprint spakowany w pliku |
-| `output/wspornik_final.obj`, `.stl` | Sama bryła końcowa (do importu w starszym Blenderze / druku 3D) |
+| `output/projekt4_wspornik_gladki.blend` | **Wersja końcowa GŁADKA** – bez pasków: 128 segmentów cylindra, 32 segmenty zaokrągleń, *Shade Smooth by Angle* 30° |
+| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa Z PASKAMI** – płaskie cieniowanie, widoczne ścianki (64 segmenty, 16 segm. zaokrągleń wg instrukcji). Oba pliki: kolekcje `obiekt_mods` (model + wycięcia z modyfikatorami) i `obiekt_final` (bryła po apply i Union), blueprint spakowany w pliku |
+| `output/wspornik_final_gladki.*`, `output/wspornik_final_paski.*` (`.obj`, `.stl`) | Sama bryła końcowa (do importu w starszym Blenderze / druku 3D) |
 | `output/projekt4_polowa.blend` | **Wersja zrobiona do połowy** (stan w trakcie pracy – patrz niżej) |
 | `build_half.py` | Skrypt budujący wersję do połowy |
 | `podglad_polowa.png` | Podgląd wersji do połowy (z siatką) |
@@ -15,7 +16,7 @@ Osobny projekt laboratoryjny (nie jest częścią aplikacji *mini-zoom*, leży n
 | `blueprint.png` | Rysunek referencyjny |
 | `podglad.png` | Rendery modelu z 4 stron |
 
-**Jak pobrać z GitHuba:** wejdź w repozytorium → przełącz gałąź na `blender-lab4` → `output/projekt4_wspornik.blend` → przycisk *Download raw file*.
+**Jak pobrać z GitHuba:** wejdź w repozytorium → przełącz gałąź na `blender-lab4` → `output/projekt4_wspornik_gladki.blend` (lub `_paski`) → przycisk *Download raw file*.
 Plik zapisany w Blenderze 5.2 – otworzy się w Blenderze 4.5 LTS i nowszych. W starszej wersji: uruchom `build_model.py` (zakładka *Scripting* → *Open* → *Run Script*, `blueprint.png` musi leżeć obok skryptu) albo zaimportuj `.obj`.
 
 Po otwarciu `.blend` kliknij u góry zakładkę **Blueprint** – po lewej Image Editor z rysunkiem, po prawej Viewport 3D (zad. 4.1).
@@ -53,7 +54,7 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 | Cylinder | ⌀50 × 40, oś równoległa do Y na wysokości Z = 80 (**60 nad górą podstawy**), Y 35…75 (35 od przodu podstawy) |
 | Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
 | Tylna ścianka | pełna (bez wycięcia), od góry podstawy do osi cylindra Z = 80, grub. 10 (Y 60…70, czyli 25 za przodem cylindra), u dołu szer. 60 (cała podstawa), zwęża się do 50 – styczna do cylindra |
-| Podpórka | **pełna ścianka** grub. 10 (środek, X −5…5): skos od przedniej krawędzi podstawy do przodu cylindra, pod skosem wypełniona aż do podstawy, cylindra i tylnej ścianki – bez pustej przestrzeni |
+| Podpórka | **pełna ścianka** grub. 10 (środek, X −5…5): skos od przedniej krawędzi podstawy do **dolnej krawędzi** przodu cylindra, pod skosem wypełniona aż do podstawy, cylindra i tylnej ścianki – bez pustej przestrzeni |
 
 ## Wykonanie krok po kroku (ręcznie w Blenderze)
 
@@ -89,7 +90,7 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 1. (1) Na górze podstawy zaznacz ścianę X 0…25, Y 60…70 → `E` → wyciągnij do Z = 80 (o 60); zewnętrzne górne werteksy przesuń z X = 30 na X = 25 (zwężenie do stycznej z cylindrem) – to tylna ścianka gr. 10.
 2. (2) `Shift+A` → *Cylinder*: Vertices 64, Radius 25, Depth 40. Obróć `R X 90`. Ustaw Location: X 0, Y 55, Z 80 (przód na Y = 35). Przenieś do kolekcji `model`. Można też użyć *Snap → Vertex → Closest*.
 3. (3) Podpórka: dodaj pętlę Y = 35. Zaznacz na górze podstawy pas ścian X 0…5 od Y = 0 do tylnej ścianki i wyciągnij go razem z tylną ścianką (jeden extrude o 60).
-4. (4) Ustaw górne werteksy pasa na skos: Y = 0 → Z = 20 (scal z krawędzią podstawy, `M` → *By Distance*), Y = 10 → Z = 32, Y = 20 → Z = 44, Y = 35 → Z = 62 (przód cylindra, poniżej pogłębienia ⌀30). Pod skosem zostaje **pełna ścianka** – nic nie wycinamy. Brakujące ściany uzupełnij `F` (Fill).
+4. (4) Ustaw górne werteksy pasa na skos: Y = 0 → Z = 20 (scal z krawędzią podstawy, `M` → *By Distance*), Y = 10 → Z = 32, Y = 20 → Z = 44, Y = 35 → Z = 56 (dół przodu cylindra). Pod skosem zostaje **pełna ścianka** – nic nie wycinamy. Brakujące ściany uzupełnij `F` (Fill).
 5. (5) Powtórz dla pozostałych kątowników (tylna ścianka styczna do cylindra).
 
 ### Zadanie 4.4 – otwory
@@ -112,6 +113,7 @@ Wynik: obiekt `wspornik_final` – jedna zamknięta bryła (0 krawędzi non-mani
 
 ## Uruchomienie skryptu
 ```
-blender --background --python build_model.py
+blender --background --python build_model.py                    # wersja z paskami
+LAB4_SMOOTH=1 blender --background --python build_model.py      # wersja gładka
 ```
 Wynik trafi do `output/`.

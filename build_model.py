@@ -15,6 +15,13 @@ from mathutils import Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SEG = 16  # liczba segmentów zaokrągleń (wg instrukcji)
+# LAB4_SMOOTH=1 -> wersja gładka (więcej segmentów + Shade Smooth by Angle),
+# inaczej wersja "z paskami" (płaskie cieniowanie, widoczne ścianki)
+SMOOTH = os.environ.get("LAB4_SMOOTH") == "1"
+VARIANT = "gladki" if SMOOTH else "paski"
+CYL_VERTS = 128 if SMOOTH else 64
+if SMOOTH:
+    SEG = 32
 
 # ---------------------------------------------------------------------------
 # Wymiary z rysunku [mm]
@@ -62,8 +69,9 @@ def prism_from_profile(name, profile, axis, d0, d1):
     return bpy.data.objects.new(name, me)
 
 
-def cylinder_y(name, r, y0, y1, x=0.0, z=0.0, verts=64):
+def cylinder_y(name, r, y0, y1, x=0.0, z=0.0, verts=None):
     """Cylinder o osi równoległej do Y (od y0 do y1)."""
+    verts = verts or CYL_VERTS
     bm = bmesh.new()
     bmesh.ops.create_cone(bm, cap_ends=True, segments=verts,
                           radius1=r, radius2=r, depth=y1 - y0)
@@ -160,7 +168,9 @@ parts.append(prism_from_profile(
 
 # 4.3.3 (4)-(5) podpórka: pełna ścianka gr. 10 pod skosem, od przedniej krawędzi
 # podstawy do cylindra i dalej do tylnej ścianki (bez pustej przestrzeni)
-rib = [(0, BASE_H - 5), (0, BASE_H), (CYL_Y0, CYL_Z - 18), (plate_y0 + 5, CYL_Z - 18),
+# skos dochodzi do DOŁU cylindra (dolna krawędź przodu cylindra)
+RIB_TOP = CYL_Z - CYL_D / 2 + 1
+rib = [(0, BASE_H - 5), (0, BASE_H), (CYL_Y0, RIB_TOP), (plate_y0 + 5, RIB_TOP),
        (plate_y0 + 5, BASE_H - 5)]
 parts.append(prism_from_profile("p_rib", rib, 'X', 0, RIB_T / 2))
 
@@ -272,6 +282,13 @@ col_f_cuts.hide_viewport = True
 col_f_cuts.hide_render = True
 for p in final.data.polygons:
     p.use_smooth = False
+if SMOOTH:
+    # wygładzenie: krzywizny gładkie, ostre krawędzie (> 30 st.) zostają ostre
+    for ob in (final, base, cyl):
+        for o in bpy.context.view_layer.objects:
+            o.select_set(o == ob)
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.shade_smooth_by_angle(angle=math.radians(30))
 
 # materiał
 mat = bpy.data.materials.new("stal")
@@ -328,10 +345,10 @@ os.makedirs(out_dir, exist_ok=True)
 for o in bpy.context.view_layer.objects:
     o.select_set(o == final)
 bpy.context.view_layer.objects.active = final
-bpy.ops.wm.obj_export(filepath=os.path.join(out_dir, "wspornik_final.obj"),
+bpy.ops.wm.obj_export(filepath=os.path.join(out_dir, f"wspornik_final_{VARIANT}.obj"),
                       export_selected_objects=True, export_materials=False)
-bpy.ops.wm.stl_export(filepath=os.path.join(out_dir, "wspornik_final.stl"),
+bpy.ops.wm.stl_export(filepath=os.path.join(out_dir, f"wspornik_final_{VARIANT}.stl"),
                       export_selected_objects=True)
-bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, "projekt4_wspornik.blend"),
+bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, f"projekt4_wspornik_{VARIANT}.blend"),
                             compress=True)
 print("[lab4] zapisano", out_dir)
