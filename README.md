@@ -8,6 +8,9 @@ Osobny projekt laboratoryjny (nie jest częścią aplikacji *mini-zoom*, leży n
 |---|---|
 | `output/projekt4_wspornik.blend` | **Gotowy plik Blendera**: kolekcje `obiekt_mods` (model + wycięcia z modyfikatorami) i `obiekt_final` (bryła po apply i Union), blueprint spakowany w pliku |
 | `output/wspornik_final.obj`, `.stl` | Sama bryła końcowa (do importu w starszym Blenderze / druku 3D) |
+| `output/projekt4_polowa.blend` | **Wersja zrobiona do połowy** (stan w trakcie pracy – patrz niżej) |
+| `build_half.py` | Skrypt budujący wersję do połowy |
+| `podglad_polowa.png` | Podgląd wersji do połowy (z siatką) |
 | `build_model.py` | Skrypt, który buduje cały model od zera (te same kroki co niżej) |
 | `blueprint.png` | Rysunek referencyjny |
 | `podglad.png` | Rendery modelu z 4 stron |
@@ -18,6 +21,25 @@ Plik zapisany w Blenderze 5.2 – otworzy się w Blenderze 4.5 LTS i nowszych. W
 Po otwarciu `.blend` kliknij u góry zakładkę **Blueprint** – po lewej Image Editor z rysunkiem, po prawej Viewport 3D (zad. 4.1).
 
 ![podgląd](podglad.png)
+
+## Wersja zrobiona do połowy – `projekt4_polowa.blend`
+
+Zrobione: 4.1, 4.2 i 4.3 (podstawa, część dolna z R10/R20, tylna ścianka zwężona do cylindra, podpórka/żebro, cylinder ustawiony). Niezrobione: otwory, Boolean, oczyszczanie (4.4, 4.5).
+Po czym widać, że to praca w toku:
+* obiekt nadal nazywa się `Cube` (nie przemianowany), plik otwiera się w **Edit Mode** z zaznaczonymi ścianami żebra,
+* modyfikator **Mirror** jest jeszcze niezatwierdzony (edytowana tylko połowa), widać wszystkie pętle cięć (X = 5/20/25, Y = 10/20/60, Z = −60) i bevele 16 segmentów,
+* żebro jest wyciągnięte, ale jeszcze nachodzi na cylinder i ma złą grubość (do poprawki), cylinder to osobny obiekt `Cylinder`,
+* 3D kursor stoi już w miejscu otworu ⌀15 (0, 10, −60) – przygotowanie do 4.4,
+* brak kolekcji `wycięcia`, `obiekt_mods`, `obiekt_final`,
+* lista postępu w tekście `POSTEP_PRACY.txt`.
+
+**Jakie zakładki otworzyć (u góry okna Blendera):**
+1. **Layout** – widok startowy: Viewport 3D w Edit Mode, w Outlinerze kolekcja `model` z `Cube` i `Cylinder`; po prawej *Properties* → ikona klucza 🔧 (*Modifiers*) pokazuje niezatwierdzony Mirror.
+2. **UV Editing** – po lewej Image Editor z blueprintem, po prawej Viewport 3D (to jest układ z zad. 4.1).
+3. **Modeling** – wygodna praca na siatce (Edit Mode).
+4. **Scripting** – w edytorze tekstu `POSTEP_PRACY.txt` z odhaczonymi i pozostałymi krokami.
+
+W Viewport włączone są nakładki *Wireframe* i *Edge Length*. Przy zaznaczonych krawędziach wyświetlają się ich długości.
 
 ## Wymiary odczytane z rysunku [mm]
 
@@ -30,7 +52,7 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 | Otwór dolny | ⌀15 przelotowy |
 | Cylinder | ⌀50 × 40, oś równoległa do Y na wysokości Z = 60, Y 35…75 (35 od przodu podstawy) |
 | Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
-| Tylna ścianka | grub. 10 (Y 60…70, czyli 25 za przodem cylindra), szer. 50 – styczna do cylindra |
+| Tylna ścianka | grub. 10 (Y 60…70, czyli 25 za przodem cylindra), u dołu szer. 60 (cała podstawa), zwęża się do 50 – styczna do cylindra |
 | Żebro ukośne | grub. 10, od przedniej krawędzi podstawy do przodu cylindra |
 
 ## Wykonanie krok po kroku (ręcznie w Blenderze)

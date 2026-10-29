@@ -155,7 +155,7 @@ parts.append(prism_from_profile("p_tab", tab, 'Y', 0, TAB_T))
 # 4.3.3 tylna ścianka (kątownik) styczna do cylindra, gr. 10
 plate_y0 = CYL_Y0 + 25                                           # = 60
 parts.append(prism_from_profile(
-    "p_plate", [(0, BASE_H - 5), (CYL_D / 2, BASE_H - 5), (CYL_D / 2, CYL_Z), (0, CYL_Z)],
+    "p_plate", [(0, BASE_H - 5), (hw, BASE_H - 5), (hw, BASE_H), (CYL_D / 2, CYL_Z), (0, CYL_Z)],
     'Y', plate_y0, plate_y0 + PLATE_T))
 
 # 4.3.3 (5) żebro ukośne gr. 10 od przedniej krawędzi podstawy do cylindra
