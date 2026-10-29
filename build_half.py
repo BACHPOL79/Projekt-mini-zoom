@@ -1,5 +1,5 @@
 """
-Projekt 4 - wersja zrobiona DO POŁOWY (stan pracy w trakcie zadania 4.3.3).
+Projekt 4 - wersja zrobiona DO POŁOWY (stan pracy po zadaniu 4.3.2).
 Model budowany "ręcznymi" operacjami Edit Mode: kostka -> cięcia -> usunięcie
 połowy -> Mirror -> pętle krawędzi -> extrude -> bevel. Brak żebra, otworów,
 Booleanów i oczyszczania (zadania 4.3.3 (3)-(5), 4.4, 4.5 do zrobienia).
@@ -88,23 +88,6 @@ bmesh.ops.bevel(bm, geom=e20 + list({v for e in e20 for v in e.verts}),
                 offset=19.98, offset_type='OFFSET', segments=16, profile=0.5,
                 affect='EDGES', clamp_overlap=False)
 
-# --- 4.3.3 (1) wyprowadzenie górne: tylna ścianka + ścianka pod podpórką ------
-# jeden extrude: tylna ścianka (Y 60..70) i środkowa ścianka gr. 10 (X 0..5)
-top = [f for f in bm.faces if f.normal.z > 0.99 and near(f.calc_center_median().z, 20)
-       and (all(v.co.y >= 60 - 1e-3 for v in f.verts) or
-            all(v.co.x <= 5 + 1e-3 for v in f.verts))]
-ext = bmesh.ops.extrude_face_region(bm, geom=top)
-bmesh.ops.delete(bm, geom=top, context='FACES')
-verts = [g for g in ext["geom"] if isinstance(g, bmesh.types.BMVert)]
-bmesh.ops.translate(bm, verts=verts, vec=(0, 0, 60))   # do osi cylindra Z = 80
-for v in verts:
-    if near(v.co.x, 30):           # zwężenie tylnej ścianki do stycznej X = 25
-        v.co.x = 25
-    if v.co.y < 60 - 1e-3:         # 4.3.3 (4) skos podpórki: od krawędzi podstawy do cylindra
-        v.co.z = 20 + 42 * min(v.co.y, 35) / 35
-bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
-bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-4)
-
 # ściany na płaszczyźnie symetrii nie są potrzebne (Mirror + Clipping)
 bmesh.ops.delete(bm, geom=[f for f in bm.faces
                            if all(abs(v.co.x) < 1e-3 for v in f.verts)], context='FACES')
@@ -121,9 +104,9 @@ mir.use_clip = True
 mir.use_mirror_merge = True
 mir.merge_threshold = 0.01
 
-# --- 4.3.3 (2) cylinder fi50 x 40, osadzony na tylnej ściance ----------------
+# --- 4.3.3 (2) cylinder fi50 x 40 dodany, jeszcze NIE osadzony (wisi nad modelem) ----------------
 bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=25, depth=40,
-                                    location=(0, 55, 80), rotation=(math.radians(90), 0, 0))
+                                    location=(0, 55, 140), rotation=(math.radians(90), 0, 0))
 cyl = bpy.context.active_object
 for c in cyl.users_collection:
     c.objects.unlink(cyl)
@@ -143,13 +126,11 @@ txt.write("""PROJEKT 4 - STAN PRACY
 [x] 4.1   scena, jednostki mm, blueprint w Image Editor (zakładka UV Editing)
 [x] 4.2.1 kostka 60x70x20, podział YZ, połowa usunięta, Mirror X + Clipping
 [x] 4.2.2 pętle krawędzi: X=5, 20, 25 / Y=10, 20, 35, 60
-[x] 4.3.1 część dolna wyciągnięta o 80, cięcia Z=-10 i Z=-60
+[x] 4.3.1 część dolna wyciągnięta o 80, cięcie Z=-60
 [x] 4.3.2 Bevel R10 i R20, 16 segmentów
-[x] 4.3.3 (1) tylna ścianka gr.10 wyciągnięta do Z=80 (60 nad górą podstawy)
-[x] 4.3.3 (2) cylinder fi50x40 ustawiony (0, 55, 80)
-[x] 4.3.3 (4) podpórka: pełna ścianka gr.10 pod skosem, od podstawy do cylindra i tylnej ścianki
-[x] 4.3.3 (5) tylna ścianka zwężona do stycznej z cylindrem
-[ ] podpórka i ścianka nachodzą na cylinder - do oczyszczenia w 4.5
+[~] 4.3.3 (2) cylinder fi50x40 dodany - TRZEBA go osadzić w (0, 55, 80)
+[ ] 4.3.3 (1) tylna ścianka gr.10 do Z=80, zwężona do stycznej (zaznaczone ściany)
+[ ] 4.3.3 (3)-(5) podpórka - pełna ścianka gr.10 pod skosem do cylindra
 [ ] zmienić nazwę obiektu Cube -> podstawa
 [ ] 4.4   kolekcja "wycięcia": fi20, pogłębienie fi30x6 (Mirror), fi15 (kursor już ustawiony)
 [ ] 4.4   Boolean Difference -> kolekcja "wycięcia"
@@ -184,7 +165,7 @@ bpy.ops.mesh.select_mode(type='FACE')
 bmE = bmesh.from_edit_mesh(base.data)
 for f in bmE.faces:
     c = f.calc_center_median()
-    f.select_set(f.normal.z > 0.5 and c.y > 30 and c.x < 6 and c.z > 35)
+    f.select_set(f.normal.z > 0.99 and near(c.z, 20) and (c.y > 60 or c.x < 5))
 bmesh.update_edit_mesh(base.data)
 
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "projekt4_polowa.blend"), compress=True)

@@ -24,12 +24,12 @@ Po otwarciu `.blend` kliknij u góry zakładkę **Blueprint** – po lewej Image
 
 ## Wersja zrobiona do połowy – `projekt4_polowa.blend`
 
-Zrobione: 4.1, 4.2 i 4.3 (podstawa, część dolna z R10/R20, tylna ścianka zwężona do cylindra, podpórka/żebro, cylinder ustawiony). Niezrobione: otwory, Boolean, oczyszczanie (4.4, 4.5).
+Zrobione: 4.1, 4.2, 4.3.1 i 4.3.2, czyli podstawa z Mirror, wszystkie pętle cięć, część dolna wyciągnięta o 80 i zaokrąglenia R10/R20. Cylinder ⌀50×40 jest dodany, ale **jeszcze nieosadzony** (wisi nad modelem).
+Niezrobione: tylna ścianka, podpórka, osadzenie cylindra (4.3.3), otwory i Boolean (4.4), oczyszczanie (4.5).
 Po czym widać, że to praca w toku:
-* obiekt nadal nazywa się `Cube` (nie przemianowany), plik otwiera się w **Edit Mode** z zaznaczonymi ścianami żebra,
-* modyfikator **Mirror** jest jeszcze niezatwierdzony (edytowana tylko połowa), widać wszystkie pętle cięć (X = 5/20/25, Y = 10/20/60, Z = −60) i bevele 16 segmentów,
-* żebro jest wyciągnięte, ale jeszcze nachodzi na cylinder i ma złą grubość (do poprawki), cylinder to osobny obiekt `Cylinder`,
-* 3D kursor stoi już w miejscu otworu ⌀15 (0, 10, −60) – przygotowanie do 4.4,
+* obiekt nadal nazywa się `Cube`, plik otwiera się w **Edit Mode** z zaznaczonymi ścianami, z których będą wyciągane tylna ścianka i podpórka (następny krok),
+* Mirror jest niezatwierdzony (edytowana tylko połowa), widać wszystkie pętle cięć i bevele 16 segmentów,
+* 3D kursor stoi już w miejscu otworu ⌀15 (0, 10, −60),
 * brak kolekcji `wycięcia`, `obiekt_mods`, `obiekt_final`,
 * lista postępu w tekście `POSTEP_PRACY.txt`.
 
@@ -65,7 +65,12 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 
 ### Zadanie 4.2 – kształt podstawowy
 1. W Outlinerze: PPM → *New Collection* → nazwij `model`.
-2. `Shift+A` → *Mesh → Cube*. `Tab` (Edit Mode), zaznacz wszystko `A`, `N` → ustaw wymiary w *Item → Dimensions*: X 60, Y 70, Z 20 (w Object Mode) – albo w Edit Mode przeskaluj tak, by siatka miała X −30…30, Y 0…70, Z 0…20 (przód styczny z płaszczyzną XZ, origin zostaje w World Origin). Jeśli skalowałeś w Object Mode: `Ctrl+A` → *Scale*.
+2. **Kostka 20×60×70 (Z.4.2.1)**: `Shift+A` → *Mesh → Cube*. Domyślna kostka ma 2×2×2 i środek w (0,0,0). Skalujemy ją w **Edit Mode**, żeby Object Origin został w World Origin, a skala obiektu = 1:
+   * `Tab` (Edit Mode) → `A` (zaznacz wszystko),
+   * wpisz z klawiatury: `S` `X` `0.3` `Enter` (szer. 60), `S` `Y` `0.35` `Enter` (głęb. 70), `S` `Z` `0.1` `Enter` (wys. 20). Przy domyślnych jednostkach (metrach) wyjdzie 0.6 × 0.7 × 0.2 m, tak jak u prowadzącego (0.1 m = 10 mm),
+   * przód styczny z płaszczyzną XZ: `G` `Y` `0.35` `Enter`. Siatka zajmuje wtedy Y 0…0.7, a przód (strona widoczna w `Numpad 1`) leży na Y = 0. Opcjonalnie `G` `Z` `0.1`, żeby spód leżał na Z = 0.
+   * kontrola: `N` → *Item*. Zaznacz ścianę przednią, *Median Y* = 0. W Object Mode *Dimensions* = 0.6 / 0.7 / 0.2, *Scale* = 1, *Location* = 0.
+   * jeśli wolisz milimetry (jak w moim pliku): *Scene Properties → Units* → Unit Scale `0.001`, Length *Millimeters*. Wtedy `S X 30`, `S Y 35`, `S Z 10`, `G Y 35`.
 3. `M` → przenieś do kolekcji `model`.
 4. Edit Mode → `Ctrl+R` → pętla krawędzi w połowie (płaszczyzna YZ, X = 0). Zaznacz wierzchołki z X < 0 → `X` → *Vertices*.
 5. *Modifiers → Add → Generate → Mirror*: Axis **X**, *Bisect* wył., *Clipping* **wł.**, *Merge* **wł.**, 0.01.
