@@ -53,7 +53,7 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 | Cylinder | ⌀50 × 40, oś równoległa do Y na wysokości Z = 80 (**60 nad górą podstawy**), Y 35…75 (35 od przodu podstawy) |
 | Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
 | Tylna ścianka | pełna (bez wycięcia), od góry podstawy do osi cylindra Z = 80, grub. 10 (Y 60…70, czyli 25 za przodem cylindra), u dołu szer. 60 (cała podstawa), zwęża się do 50 – styczna do cylindra |
-| Żebro ukośne | grub. 10, od przedniej krawędzi podstawy do przodu cylindra |
+| Podpórka | **pełna ścianka** grub. 10 (środek, X −5…5): skos od przedniej krawędzi podstawy do przodu cylindra, pod skosem wypełniona aż do podstawy, cylindra i tylnej ścianki – bez pustej przestrzeni |
 
 ## Wykonanie krok po kroku (ręcznie w Blenderze)
 
@@ -83,8 +83,8 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 **4.3.3 Część górna**
 1. (1) Na górze podstawy zaznacz ścianę X 0…25, Y 60…70 → `E` → wyciągnij do Z = 80 (o 60); zewnętrzne górne werteksy przesuń z X = 30 na X = 25 (zwężenie do stycznej z cylindrem) – to tylna ścianka gr. 10.
 2. (2) `Shift+A` → *Cylinder*: Vertices 64, Radius 25, Depth 40. Obróć `R X 90`. Ustaw Location: X 0, Y 55, Z 80 (przód na Y = 35). Przenieś do kolekcji `model`. Można też użyć *Snap → Vertex → Closest*.
-3. (3) Dla żebra: ściana X 0…5 przy przodzie podstawy – usuń zbędne powierzchnie w miejscu łączenia kątowego.
-4. (4) Wyciągnij żebro ukośnie do przodu cylindra (koniec na Y ≈ 35–48, Z ≈ 62 – poniżej pogłębienia ⌀30) i połącz właściwe wierzchołki: zaznacz 2 wierzchołki → `F` (Fill) – tak samo z krawędziami, aż bryła będzie zamknięta.
+3. (3) Podpórka: dodaj pętlę Y = 35. Zaznacz na górze podstawy pas ścian X 0…5 od Y = 0 do tylnej ścianki i wyciągnij go razem z tylną ścianką (jeden extrude o 60).
+4. (4) Ustaw górne werteksy pasa na skos: Y = 0 → Z = 20 (scal z krawędzią podstawy, `M` → *By Distance*), Y = 10 → Z = 32, Y = 20 → Z = 44, Y = 35 → Z = 62 (przód cylindra, poniżej pogłębienia ⌀30). Pod skosem zostaje **pełna ścianka** – nic nie wycinamy. Brakujące ściany uzupełnij `F` (Fill).
 5. (5) Powtórz dla pozostałych kątowników (tylna ścianka styczna do cylindra).
 
 ### Zadanie 4.4 – otwory
@@ -103,7 +103,7 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 4. *Apply* (`Ctrl+A` → *Apply All Modifiers* / menu modyfikatora → *Apply*): najpierw na obiektach wycięć, potem na cylindrze, potem na podstawie (Mirror, potem Boolean).
 5. Na podstawie dodaj **Boolean → Union** z obiektem cylinder → *Apply*. Usuń cylinder (jest już częścią bryły).
 
-Wynik: obiekt `wspornik_final` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 231 016 mm³).
+Wynik: obiekt `wspornik_final` – jedna zamknięta bryła (0 krawędzi non-manifold, objętość ≈ 242 389 mm³).
 
 ## Uruchomienie skryptu
 ```

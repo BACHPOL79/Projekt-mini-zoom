@@ -62,7 +62,7 @@ bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.x < -1e-3], context='VERT
 # --- 4.2.2 dodatkowe linie cięć (miejsca wypustek) ---------------------------
 for x in (5, 20, 25):
     cut(bm, (x, 0, 0), (1, 0, 0))
-for y in (10, 20, 60):
+for y in (10, 20, 35, 60):
     cut(bm, (0, y, 0), (0, 1, 0))
 
 # --- 4.3.1 część dolna: extrude ściany spodu w dół o 80 ----------------------
@@ -88,25 +88,22 @@ bmesh.ops.bevel(bm, geom=e20 + list({v for e in e20 for v in e.verts}),
                 offset=19.98, offset_type='OFFSET', segments=16, profile=0.5,
                 affect='EDGES', clamp_overlap=False)
 
-# --- 4.3.3 (1) wyprowadzenie górne: tylna ścianka do osi cylindra (Z = 80) ------------
+# --- 4.3.3 (1) wyprowadzenie górne: tylna ścianka + ścianka pod podpórką ------
+# jeden extrude: tylna ścianka (Y 60..70) i środkowa ścianka gr. 10 (X 0..5)
 top = [f for f in bm.faces if f.normal.z > 0.99 and near(f.calc_center_median().z, 20)
-       and all(v.co.y >= 60 - 1e-3 for v in f.verts)]
+       and (all(v.co.y >= 60 - 1e-3 for v in f.verts) or
+            all(v.co.x <= 5 + 1e-3 for v in f.verts))]
 ext = bmesh.ops.extrude_face_region(bm, geom=top)
 bmesh.ops.delete(bm, geom=top, context='FACES')
 verts = [g for g in ext["geom"] if isinstance(g, bmesh.types.BMVert)]
-bmesh.ops.translate(bm, verts=verts, vec=(0, 0, 60))
-# zwężenie ku górze: zewnętrzne werteksy (X=30) na styczną cylindra X=25
+bmesh.ops.translate(bm, verts=verts, vec=(0, 0, 60))   # do osi cylindra Z = 80
 for v in verts:
-    if near(v.co.x, 30):
+    if near(v.co.x, 30):           # zwężenie tylnej ścianki do stycznej X = 25
         v.co.x = 25
-
-# --- 4.3.3 (4)-(5) podpórka / żebro ukośne: extrude ściany X 0..5, Y 0..10 ---
-rib = [f for f in bm.faces if f.normal.z > 0.99 and near(f.calc_center_median().z, 20)
-       and all(v.co.x <= 5 + 1e-3 and v.co.y <= 10 + 1e-3 for v in f.verts)]
-ext = bmesh.ops.extrude_face_region(bm, geom=rib)
-bmesh.ops.delete(bm, geom=rib, context='FACES')
-verts = [g for g in ext["geom"] if isinstance(g, bmesh.types.BMVert)]
-bmesh.ops.translate(bm, verts=verts, vec=(0, 36, 42))   # koniec wchodzi w cylinder
+    if v.co.y < 60 - 1e-3:         # 4.3.3 (4) skos podpórki: od krawędzi podstawy do cylindra
+        v.co.z = 20 + 42 * min(v.co.y, 35) / 35
+bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-4)
+bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-4)
 
 # ściany na płaszczyźnie symetrii nie są potrzebne (Mirror + Clipping)
 bmesh.ops.delete(bm, geom=[f for f in bm.faces
@@ -145,14 +142,14 @@ txt = bpy.data.texts.new("POSTEP_PRACY.txt")
 txt.write("""PROJEKT 4 - STAN PRACY
 [x] 4.1   scena, jednostki mm, blueprint w Image Editor (zakładka UV Editing)
 [x] 4.2.1 kostka 60x70x20, podział YZ, połowa usunięta, Mirror X + Clipping
-[x] 4.2.2 pętle krawędzi: X=5, 20, 25 / Y=10, 20, 60
+[x] 4.2.2 pętle krawędzi: X=5, 20, 25 / Y=10, 20, 35, 60
 [x] 4.3.1 część dolna wyciągnięta o 80, cięcia Z=-10 i Z=-60
 [x] 4.3.2 Bevel R10 i R20, 16 segmentów
 [x] 4.3.3 (1) tylna ścianka gr.10 wyciągnięta do Z=80 (60 nad górą podstawy)
 [x] 4.3.3 (2) cylinder fi50x40 ustawiony (0, 55, 80)
-[x] 4.3.3 (4) podpórka (żebro ukośne) wyciągnięta z podstawy do cylindra
+[x] 4.3.3 (4) podpórka: pełna ścianka gr.10 pod skosem, od podstawy do cylindra i tylnej ścianki
 [x] 4.3.3 (5) tylna ścianka zwężona do stycznej z cylindrem
-[ ] poprawić grubość żebra na 10 (teraz ok. 7.5 prostopadle) i sprawdzić połączenie z cylindrem
+[ ] podpórka i ścianka nachodzą na cylinder - do oczyszczenia w 4.5
 [ ] zmienić nazwę obiektu Cube -> podstawa
 [ ] 4.4   kolekcja "wycięcia": fi20, pogłębienie fi30x6 (Mirror), fi15 (kursor już ustawiony)
 [ ] 4.4   Boolean Difference -> kolekcja "wycięcia"

@@ -158,15 +158,10 @@ parts.append(prism_from_profile(
     "p_plate", [(0, BASE_H - 5), (hw, BASE_H - 5), (hw, BASE_H), (CYL_D / 2, CYL_Z), (0, CYL_Z)],
     'Y', plate_y0, plate_y0 + PLATE_T))
 
-# 4.3.3 (5) żebro ukośne gr. 10 od przedniej krawędzi podstawy do cylindra
-p0 = Vector((0, BASE_H))                    # (y, z)
-p1 = Vector((CYL_Y0, CYL_Z - 18))           # przód cylindra, poniżej pogłębienia fi30
-d = (p1 - p0).normalized()
-n = Vector((d.y, -d.x))
-q0 = p0 + n * RIB_T
-y_in = CYL_Y0 + 15
-rib = [(p0.x, q0.y), tuple(p0), tuple(p1), (y_in, CYL_Z - 14),
-       (y_in, q0.y + (y_in - q0.x) * d.y / d.x), tuple(q0)]
+# 4.3.3 (4)-(5) podpórka: pełna ścianka gr. 10 pod skosem, od przedniej krawędzi
+# podstawy do cylindra i dalej do tylnej ścianki (bez pustej przestrzeni)
+rib = [(0, BASE_H - 5), (0, BASE_H), (CYL_Y0, CYL_Z - 18), (plate_y0 + 5, CYL_Z - 18),
+       (plate_y0 + 5, BASE_H - 5)]
 parts.append(prism_from_profile("p_rib", rib, 'X', 0, RIB_T / 2))
 
 for p in parts:
