@@ -6,7 +6,7 @@ Osobny projekt laboratoryjny (nie jest częścią aplikacji *mini-zoom*, leży n
 
 | Plik | Co to jest |
 |---|---|
-| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa z paskami**: widoczne wszystkie linie siatki (Overlays → Wireframe, Edge Length), po `Tab` każdą ścianę można zaznaczyć osobno |
+| `output/projekt4_wspornik_paski.blend` | **Wersja końcowa z paskami**: naturalna siatka z bloków – krawędzie tylko na granicach elementów (pętle X ±0.05/±0.2/±0.25 i oś X = 0, Y 0.2/0.35/0.6, Z na końcu R10 i w środku otworu ⌀15), cylinder bez dodatkowych cięć. Po `Tab` każdy blok można zaznaczyć osobno (Overlays → Wireframe, Edge Length) |
 | `output/projekt4_wspornik_gladki.blend` | **Wersja końcowa gładka**: 128 segmentów cylindra, Shade Smooth by Angle 30°, bez pasków |
 | `output/projekt4_polowa.blend` | **Wersja zrobiona do połowy** (stan po zadaniu 4.3.2) |
 | `output/wspornik_final_*.obj`, `.stl` | Sama bryła końcowa (import w starszym Blenderze / druk 3D) |

@@ -146,11 +146,39 @@ def prim_cylinder(coll, r, y0, y1, z, verts=None):
     return ob
 
 
-def bisect(ob, planes):
+# pętle krawędzi tylko na granicach bloków (jak Ctrl+R w zad. 4.2.2 / 4.3.1):
+# X: podpórka 5, część dolna 20, tylna ścianka 25; Y: tył części dolnej 20,
+# przód cylindra 35, przód ścianki 60; Z: koniec R10 (-10), środek otworu fi15
+BLOCK_X = [RIB_T / 2, TAB_W / 2, CYL_D / 2]
+
+
+def natural_planes(xs):
+    return ([((x, 0, 0), (1, 0, 0)) for x in xs] +
+            [((0, y, 0), (0, 1, 0)) for y in (TAB_T, CYL_Y0, CYL_Y0 + 25)] +
+            [((0, 0, z), (0, 0, 1)) for z in (-FILLET_R, TAB_HOLE_Z)])
+
+
+def on_cylinder(f):
+    """ściana należąca do cylindra (płaszcz, denka, otwory) - bez dodatkowych cięć"""
+    ax_z = K * (CYL_Z + ZO)
+    for v in f.verts:
+        r = math.hypot(v.co.x, v.co.z - ax_z) / K
+        y = v.co.y / K
+        if not (CYL_Y0 - 1e-3 <= y <= CYL_Y0 + CYL_L + 1e-3 and r <= CYL_D / 2 + 1e-3):
+            return False
+        if not (abs(r - CYL_D / 2) < 0.05 or r <= CB_D / 2 + 1e-3 or
+                abs(y - CYL_Y0) < 1e-3 or abs(y - CYL_Y0 - CYL_L) < 1e-3):
+            return False
+    return True
+
+
+def bisect(ob, planes, skip=None):
     bm = bmesh.new()
     bm.from_mesh(ob.data)
     for co, no in planes:
-        geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+        faces = [f for f in bm.faces if not (skip and skip(f))]
+        geom = list({v for f in faces for v in f.verts}) + \
+            list({e for f in faces for e in f.edges}) + faces
         bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no, dist=1e-6)
     bm.to_mesh(ob.data)
     bm.free()
@@ -231,9 +259,7 @@ for p in parts[1:]:
 cleanup(base)
 if not SMOOTH:
     # 4.2.2 / 4.3.1 pętle krawędzi - każda ściana osobno do zaznaczenia
-    bisect(base, [((x, 0, 0), (1, 0, 0)) for x in (5, 20, 25)] +
-                 [((0, y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60)] +
-                 [((0, 0, z), (0, 0, 1)) for z in (-40, -20, 10, 40, 60)])
+    bisect(base, natural_planes(BLOCK_X))
 # otwarta połowa: bez ścian w płaszczyźnie symetrii X = 0
 bm = bmesh.new()
 bm.from_mesh(base.data)
@@ -309,10 +335,22 @@ u.solver = 'EXACT'
 apply_all_modifiers(final)
 cleanup(final, dist=1e-6)
 if not SMOOTH:
-    # linie siatki na całej bryle (te same pętle co na połówce, po obu stronach)
-    bisect(final, [((K * x, 0, 0), (1, 0, 0)) for x in (-25, -20, -5, 5, 20, 25)] +
-                  [((0, K * y, 0), (0, 1, 0)) for y in (10, 20, 35, 45, 60, 70)] +
-                  [((0, 0, K * (z + ZO)), (0, 0, 1)) for z in (-40, -20, 10, 40, 60, 80)])
+    # te same pętle na granicach bloków po obu stronach; cylinder nie jest cięty
+    bisect(final, [((K * co[0], K * co[1], K * (co[2] + ZO)), no)
+                   for co, no in natural_planes([-x for x in BLOCK_X] + [0] + BLOCK_X)],
+           skip=on_cylinder)
+    # usunięcie ukośnych krawędzi "mostków" po Booleanie (np. otwór -> brzeg ściany)
+    bm = bmesh.new()
+    bm.from_mesh(final.data)
+    def axial(e):
+        d = (e.verts[1].co - e.verts[0].co).normalized()
+        return max(abs(d.x), abs(d.y), abs(d.z)) > 0.9999
+    bridges = [e for e in bm.edges if len(e.link_faces) == 2 and not axial(e)
+               and e.link_faces[0] is not e.link_faces[1]
+               and e.link_faces[0].normal.angle(e.link_faces[1].normal, 1) < math.radians(0.5)]
+    bmesh.ops.dissolve_edges(bm, edges=bridges, use_verts=True)
+    bm.to_mesh(final.data)
+    bm.free()
 for p in final.data.polygons:
     p.use_smooth = False
 if SMOOTH:
