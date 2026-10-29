@@ -50,9 +50,9 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 | Podstawa | 60 (X) × 70 (Y) × 20 (Z); X −30…30, Y 0…70, Z 0…20 |
 | Część dolna | szer. 40 (2×R20), grub. 20 (Y 0…20), środek otworu 60 pod spodem podstawy (Z = −60), dół R20, przejście do podstawy R10 |
 | Otwór dolny | ⌀15 przelotowy |
-| Cylinder | ⌀50 × 40, oś równoległa do Y na wysokości Z = 60, Y 35…75 (35 od przodu podstawy) |
+| Cylinder | ⌀50 × 40, oś równoległa do Y na wysokości Z = 80 (**60 nad górą podstawy**), Y 35…75 (35 od przodu podstawy) |
 | Otwór cylindra | ⌀20 przelotowy, pogłębienie ⌀30 × 6 z obu stron |
-| Tylna ścianka | grub. 10 (Y 60…70, czyli 25 za przodem cylindra), u dołu szer. 60 (cała podstawa), zwęża się do 50 – styczna do cylindra |
+| Tylna ścianka | pełna (bez wycięcia), od góry podstawy do osi cylindra Z = 80, grub. 10 (Y 60…70, czyli 25 za przodem cylindra), u dołu szer. 60 (cała podstawa), zwęża się do 50 – styczna do cylindra |
 | Żebro ukośne | grub. 10, od przedniej krawędzi podstawy do przodu cylindra |
 
 ## Wykonanie krok po kroku (ręcznie w Blenderze)
@@ -81,17 +81,17 @@ Jednostki sceny: *Metric*, *Unit Scale* 0.001, *Length* = mm (1 jednostka = 1 mm
 2. Krawędź wewnętrzna między spodem podstawy a bokiem części dolnej (X = 20, Z = 0) → `Ctrl+B`, *Width* **10**, *Segments* **16** → R10.
 
 **4.3.3 Część górna**
-1. (1) Na górze podstawy zaznacz ścianę X 0…25, Y 60…70 → `E` → wyciągnij do Z = 60 (o 40) – to tylna ścianka gr. 10.
-2. (2) `Shift+A` → *Cylinder*: Vertices 64, Radius 25, Depth 40. Obróć `R X 90`. Ustaw Location: X 0, Y 55, Z 60 (przód na Y = 35). Przenieś do kolekcji `model`. Można też użyć *Snap → Vertex → Closest*.
+1. (1) Na górze podstawy zaznacz ścianę X 0…25, Y 60…70 → `E` → wyciągnij do Z = 80 (o 60); zewnętrzne górne werteksy przesuń z X = 30 na X = 25 (zwężenie do stycznej z cylindrem) – to tylna ścianka gr. 10.
+2. (2) `Shift+A` → *Cylinder*: Vertices 64, Radius 25, Depth 40. Obróć `R X 90`. Ustaw Location: X 0, Y 55, Z 80 (przód na Y = 35). Przenieś do kolekcji `model`. Można też użyć *Snap → Vertex → Closest*.
 3. (3) Dla żebra: ściana X 0…5 przy przodzie podstawy – usuń zbędne powierzchnie w miejscu łączenia kątowego.
-4. (4) Wyciągnij żebro ukośnie do przodu cylindra (koniec na Y ≈ 35–48, Z ≈ 38–42 – poniżej pogłębienia ⌀30) i połącz właściwe wierzchołki: zaznacz 2 wierzchołki → `F` (Fill) – tak samo z krawędziami, aż bryła będzie zamknięta.
+4. (4) Wyciągnij żebro ukośnie do przodu cylindra (koniec na Y ≈ 35–48, Z ≈ 62 – poniżej pogłębienia ⌀30) i połącz właściwe wierzchołki: zaznacz 2 wierzchołki → `F` (Fill) – tak samo z krawędziami, aż bryła będzie zamknięta.
 5. (5) Powtórz dla pozostałych kątowników (tylna ścianka styczna do cylindra).
 
 ### Zadanie 4.4 – otwory
 1. Nowa kolekcja `wycięcia`.
 2. Ustaw kursor w środku otworu (`Shift+S` → *Cursor to Selected* na zaznaczonych wierzchołkach albo `N` → *View → 3D Cursor*), potem `Shift+A` → *Cylinder* – pojawi się w miejscu kursora:
-   * `otwor_fi20`: R 10, dł. 50, oś Y, środek (0, 55, 60),
-   * `poglebienie_fi30x6`: R 15, Y 34…41 (6 mm w głąb cylindra + 1 mm zapasu). Dodaj **Mirror** oś **Y** z *Mirror Object* = Empty w środku cylindra (0, 55, 60) → pogłębienie po obu stronach,
+   * `otwor_fi20`: R 10, dł. 50, oś Y, środek (0, 55, 80),
+   * `poglebienie_fi30x6`: R 15, Y 34…41 (6 mm w głąb cylindra + 1 mm zapasu). Dodaj **Mirror** oś **Y** z *Mirror Object* = Empty w środku cylindra (0, 55, 80) → pogłębienie po obu stronach,
    * `otwor_fi15`: R 7.5, dł. 30, oś Y, środek (0, 10, −60).
 3. W Outlinerze wyłącz widoczność kolekcji `wycięcia` (ikonka oka / ekranu).
 4. Na **podstawie** i **cylindrze**: *Add Modifier → Generate → Boolean*, **Difference**, *Operand Type* **Collection** → `wycięcia`. (W kolekcji muszą być same siatki – Empty trzymaj poza nią.)

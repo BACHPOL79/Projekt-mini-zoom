@@ -25,7 +25,7 @@ TAB_HOLE_Z = -60                           # środek otworu fi15: 60 pod podstaw
 TAB_R, FILLET_R = 20, 10                   # R20 na dole, R10 przy podstawie
 TAB_HOLE_D = 15
 CYL_D, CYL_L = 50, 40                      # cylinder fi50 x 40
-CYL_Z = 60                                 # oś cylindra 60 nad spodem podstawy
+CYL_Z = 20 + 60                            # oś cylindra 60 nad GÓRĄ podstawy (Z = 80)
 CYL_Y0 = 35                                # przód cylindra 35 od przodu podstawy
 PLATE_T = 10                               # tylna ścianka gr. 10 (25 od cylindra)
 HOLE_D, CB_D, CB_DEPTH = 20, 30, 6         # fi20, pogłębienie fi30 x 6 obustronnie
@@ -160,12 +160,12 @@ parts.append(prism_from_profile(
 
 # 4.3.3 (5) żebro ukośne gr. 10 od przedniej krawędzi podstawy do cylindra
 p0 = Vector((0, BASE_H))                    # (y, z)
-p1 = Vector((CYL_Y0, 42))                   # poniżej pogłębienia fi30
+p1 = Vector((CYL_Y0, CYL_Z - 18))           # przód cylindra, poniżej pogłębienia fi30
 d = (p1 - p0).normalized()
 n = Vector((d.y, -d.x))
 q0 = p0 + n * RIB_T
-y_in = CYL_Y0 + 13
-rib = [(p0.x, q0.y), tuple(p0), tuple(p1), (y_in, p1.y),
+y_in = CYL_Y0 + 15
+rib = [(p0.x, q0.y), tuple(p0), tuple(p1), (y_in, CYL_Z - 14),
        (y_in, q0.y + (y_in - q0.x) * d.y / d.x), tuple(q0)]
 parts.append(prism_from_profile("p_rib", rib, 'X', 0, RIB_T / 2))
 
@@ -289,11 +289,11 @@ for ob in (final, base, cyl):
 # ---------------------------------------------------------------------------
 cam_data = bpy.data.cameras.new("Camera")
 cam_data.type = 'ORTHO'
-cam_data.ortho_scale = 230
+cam_data.ortho_scale = 250
 cam_data.clip_end = 5000
 cam = bpy.data.objects.new("Camera", cam_data)
 cam.location = (260, -260, 240)
-direction = Vector((0, 35, 5)) - cam.location
+direction = Vector((0, 35, 15)) - cam.location
 cam.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
 scene.collection.objects.link(cam)
 scene.camera = cam
